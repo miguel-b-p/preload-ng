@@ -5,6 +5,7 @@
 *.la
 *.lo
 preload
+*.tar.gz
 
 # Autotools generated
 Makefile
