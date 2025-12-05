@@ -54,7 +54,7 @@ Add to your `flake.nix`:
       modules = [
         preload-ng.nixosModules.default
         {
-          services.preload.enable = true;
+          services.preload-ng.enable = true;
         }
       ];
     };

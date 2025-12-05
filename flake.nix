@@ -86,12 +86,12 @@
           ...
         }:
         let
-          cfg = config.services.preload;
+          cfg = config.services.preload-ng;
           preload-pkg = self.packages.${pkgs.system}.preload-ng;
         in
         {
-          options.services.preload = {
-            enable = lib.mkEnableOption "preload daemon";
+          options.services.preload-ng = {
+            enable = lib.mkEnableOption "preload-ng daemon";
 
             package = lib.mkOption {
               type = lib.types.package;
@@ -101,8 +101,8 @@
           };
 
           config = lib.mkIf cfg.enable {
-            systemd.services.preload = {
-              description = "Preload Daemon";
+            systemd.services.preload-ng = {
+              description = "Preload-NG Daemon";
               wantedBy = [ "multi-user.target" ];
               after = [ "local-fs.target" ];
 
