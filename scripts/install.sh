@@ -1,20 +1,20 @@
 #!/bin/bash
-# Script de instalação para preload-ng
-# Este script compila e opcionalmente instala o preload
+# Installation script for preload-ng
+# This script compiles and optionally installs preload
 
 set -e
 
 echo "=========================================="
-echo "  Preload-NG - Script de Instalação"
+echo "  Preload-NG - Installation Script"
 echo "=========================================="
 echo ""
 
-# Verificar dependências
-echo "[1/4] Verificando dependências..."
+# Check dependencies
+echo "[1/4] Checking dependencies..."
 
 check_command() {
     if ! command -v "$1" &>/dev/null; then
-        echo "Erro: '$1' não encontrado. Por favor, instale-o primeiro."
+        echo "Error: '$1' not found. Please install it first."
         exit 1
     fi
 }
@@ -23,50 +23,50 @@ check_command autoreconf
 check_command make
 check_command gcc
 
-echo "      ✓ Todas as dependências encontradas"
+echo "      ✓ All dependencies found"
 echo ""
 
-# Executar autoreconf
-echo "[2/4] Executando autoreconf..."
+# Run autoreconf
+echo "[2/4] Running autoreconf..."
 autoreconf -fi
-echo "      ✓ autoreconf concluído"
+echo "      ✓ autoreconf completed"
 echo ""
 
-# Executar configure
-echo "[3/4] Executando configure..."
+# Run configure
+echo "[3/4] Running configure..."
 ./configure
-echo "      ✓ configure concluído"
+echo "      ✓ configure completed"
 echo ""
 
-# Compilar
-echo "[4/4] Compilando..."
+# Compile
+echo "[4/4] Compiling..."
 make
-echo "      ✓ Compilação concluída"
+echo "      ✓ Compilation completed"
 echo ""
 
 echo "=========================================="
-echo "  Compilação finalizada com sucesso!"
+echo "  Build completed successfully!"
 echo "=========================================="
 echo ""
 
-# Perguntar se deseja instalar
-read -p "Deseja instalar o preload? (s/N): " resposta
+# Ask if user wants to install
+read -p "Do you want to install preload? (y/N): " response
 
-case "$resposta" in
-[sS] | [sS][iI][mM])
+case "$response" in
+[yY] | [yY][eE][sS])
     echo ""
-    echo "Instalando preload (requer permissões de root)..."
+    echo "Installing preload (requires root permissions)..."
     sudo make install
     echo ""
-    echo "✓ Preload instalado com sucesso!"
+    echo "✓ Preload installed successfully!"
     echo ""
-    echo "Para habilitar o serviço, execute:"
+    echo "To enable the service, run:"
     echo "  sudo systemctl enable preload"
     echo "  sudo systemctl start preload"
     ;;
 *)
     echo ""
-    echo "Instalação cancelada."
-    echo "Para instalar manualmente, execute: sudo make install"
+    echo "Installation cancelled."
+    echo "To install manually, run: sudo make install"
     ;;
 esac

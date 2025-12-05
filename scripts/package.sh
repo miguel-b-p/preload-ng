@@ -1,41 +1,41 @@
 #!/bin/bash
-# Script para empacotar preload-ng em tar.gz
-# Pergunta a versão e cria o arquivo com nome apropriado
+# Script to package preload-ng as tar.gz
+# Asks for version and creates file with appropriate name
 
 set -e
 
 echo "=========================================="
-echo "  Preload-NG - Script de Empacotamento"
+echo "  Preload-NG - Packaging Script"
 echo "=========================================="
 echo ""
 
-# Perguntar a versão
-read -p "Digite a versão (exemplo: 0.6.6): " versao
+# Ask for version
+read -p "Enter version (example: 0.6.6): " version
 
-# Validar entrada
-if [[ -z "$versao" ]]; then
-    echo "Erro: Versão não pode estar vazia."
+# Validate input
+if [[ -z "$version" ]]; then
+    echo "Error: Version cannot be empty."
     exit 1
 fi
 
-# Validar formato da versão (permitir números e pontos)
-if [[ ! "$versao" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-    echo "Aviso: Formato de versão incomum. Continuando..."
+# Validate version format (allow numbers and dots)
+if [[ ! "$version" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+    echo "Warning: Unusual version format. Continuing..."
 fi
 
-# Definir nome do arquivo
-nome_arquivo="preload-ng-${versao}.tar.gz"
-diretorio_atual=$(basename "$(pwd)")
-diretorio_pai=$(dirname "$(pwd)")
+# Define file name
+file_name="preload-ng-${version}.tar.gz"
+current_directory=$(basename "$(pwd)")
+parent_directory=$(dirname "$(pwd)")
 
 echo ""
-echo "Criando arquivo: $nome_arquivo"
+echo "Creating file: $file_name"
 echo ""
 
-# Ir para o diretório pai e criar o tar.gz
-cd "$diretorio_pai"
+# Go to parent directory and create tar.gz
+cd "$parent_directory"
 
-# Criar o arquivo tar.gz excluindo arquivos desnecessários
+# Create tar.gz file excluding unnecessary files
 tar --exclude='*.o' \
     --exclude='*.a' \
     --exclude='*.so' \
@@ -54,18 +54,18 @@ tar --exclude='*.o' \
     --exclude='*.swp' \
     --exclude='.git' \
     --exclude='.gitignore' \
-    -czvf "$nome_arquivo" "$diretorio_atual"
+    -czvf "$file_name" "$current_directory"
 
-# Mover para o diretório original
-mv "$nome_arquivo" "$diretorio_atual/"
+# Move to original directory
+mv "$file_name" "$current_directory/"
 
-cd "$diretorio_atual"
+cd "$current_directory"
 
 echo ""
 echo "=========================================="
-echo "  Empacotamento concluído!"
+echo "  Packaging completed!"
 echo "=========================================="
 echo ""
-echo "Arquivo criado: $(pwd)/$nome_arquivo"
-echo "Tamanho: $(du -h "$nome_arquivo" | cut -f1)"
+echo "File created: $(pwd)/$file_name"
+echo "Size: $(du -h "$file_name" | cut -f1)"
 echo ""
