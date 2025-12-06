@@ -17,37 +17,31 @@ jobs:
       - name: 🛠️ Instalar Dependências de Build (Autotools & GLib)
         run: |
           # build-essential: Instala gcc, make, etc.
-          # autotools: Ferramentas de configuração (autoconf, automake, libtool).
+          # autotools: Ferramentas de configuração.
           # libglib2.0-dev: Dependência crítica do projeto (GLib >= 2.14).
           sudo apt-get update
           sudo apt-get install -y build-essential autoconf automake libtool pkg-config libglib2.0-dev
 
-      - name: ⚙️ Configurar Projeto (Autotools no 'preload-src')
+      - name: 🏗️ Configurar, Compilar e Testar Projeto
+        # Executando todas as etapas de build dentro do subdiretório 'preload-src' 
+        # garante que o 'make' encontre o 'Makefile' gerado por './configure'.
         run: |
-          # Navega para o subdiretório que contém 'configure.ac' e 'Makefile.am'
           cd preload-src
           
-          # 1. Gera o script 'configure' e Makefiles
+          # 1. Configurar
           autoreconf -i
-          
-          # 2. Executa o script de configuração para gerar o Makefile principal na raiz.
-          # O Autotools geralmente permite que o diretório de build seja diferente do diretório de origem.
-          # Usamos '--srcdir=.' para indicar que estamos no diretório fonte.
           ./configure
-
-      - name: 🏗️ Compilar Projeto
-        # O 'make' de nível superior (que está na raiz) irá executar a compilação
-        # navegando para os subdiretórios 'src' e 'doc' conforme definido no Makefile.
-        run: make
-
-      - name: 🧪 Executar Testes (make check)
-        # Executa a suíte de testes do projeto C (se implementada via 'make check').
-        run: make check
+          
+          # 2. Compilar
+          make
+          
+          # 3. Testar
+          make check
 
       - name: 📦 Upload de Binário (preload-ng)
-        # Salva o executável 'preload-ng', que é gerado no subdiretório 'src/' (relativo à raiz).
-        # Este é o caminho onde o binário final deve estar após a compilação.
+        # O binário 'preload-ng' é gerado em 'src/' que, quando a compilação
+        # é feita de 'preload-src', o caminho completo é 'preload-src/src/'.
         uses: actions/upload-artifact@v4
         with:
           name: preload-ng-daemon
-          path: ./src/preload-ng
+          path: ./preload-src/src/preload-ng
