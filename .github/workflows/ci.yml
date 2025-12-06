@@ -16,15 +16,12 @@ jobs:
 
       - name: 🛠️ Instalar Dependências de Build (Autotools & GLib)
         run: |
-          # build-essential: Instala gcc, make, etc.
-          # autotools: Ferramentas de configuração.
-          # libglib2.0-dev: Dependência crítica do projeto (GLib >= 2.14).
           sudo apt-get update
           sudo apt-get install -y build-essential autoconf automake libtool pkg-config libglib2.0-dev
+          # Opcional: Instala help2man para remover o WARNING
+          sudo apt-get install -y help2man
 
       - name: 🏗️ Configurar, Compilar e Testar Projeto
-        # Executando todas as etapas de build dentro do subdiretório 'preload-src' 
-        # garante que o 'make' encontre o 'Makefile' gerado por './configure'.
         run: |
           cd preload-src
           
@@ -32,21 +29,24 @@ jobs:
           autoreconf -i
           ./configure
           
-          # 2. Compilar
+          # 2. Aplicar Permissão de Execução (NOVA CORREÇÃO)
+          chmod +x src/runtests.sh
+          # Adicione o test-driver também por segurança, embora geralmente seja gerado com permissão
+          chmod +x src/test-driver
+          
+          # 3. Compilar
           make
           
-          # 3. Testar (Com Lógica de Debug)
+          # 4. Testar (Com Lógica de Debug)
           echo "--- Iniciando Testes (make check) ---"
           if ! make check; then
             echo "--- Falha nos Testes. Exibindo Conteúdo de test-suite.log ---"
-            # O log de falha é gerado em preload-src/src/test-suite.log
             cat src/test-suite.log
-            exit 1 # Força a falha do job
+            exit 1
           fi
           echo "--- Testes Concluídos com Sucesso ---"
 
       - name: 📦 Upload de Binário (preload-ng)
-        # O 'uses' e 'with' devem ser filhos diretos de '- name'
         uses: actions/upload-artifact@v4
         with:
           name: preload-ng-daemon
