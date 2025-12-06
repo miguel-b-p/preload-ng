@@ -4,7 +4,6 @@
 *.so
 *.la
 *.lo
-preload
 *.tar.gz
 
 # Autotools generated

@@ -1,0 +1,47 @@
+# Thaks for the help https://github.com/lucasgab2230
+name: Build and Commit Binary
+
+on:
+  push:
+    branches:
+      - "**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake libtool pkg-config libglib2.0-dev
+
+      - name: Configure and Compile
+        run: |
+          cd preload-src
+          ./bootstrap
+          ./configure
+          make
+
+      - name: Move Binary and clean compiled files
+        run: |
+          mkdir -p bin
+          cp preload-src/src/preload bin/preload
+          cp preload-src/src/preload.conf bin/preload.conf
+          cd preload-src
+          make distclean
+
+      - name: Commit and Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add bin/preload
+          git add bin/preload.conf
+          git commit -m "chore: update compiled binary [skip ci]" || echo "No changes to commit"
+          git push

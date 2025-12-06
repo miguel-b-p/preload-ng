@@ -21,29 +21,25 @@
           pname = "preload-ng";
           version = "0.6.6";
 
-          src = ./preload-src;
+          src = ./bin;
 
-          # Remove installation of files to /var directories (not allowed in Nix sandbox)
-          # and run bootstrap to generate configure script
-          patches = [ ./disable-var-install.patch ];
+          # No build required - using precompiled binary
+          dontBuild = true;
+          dontConfigure = true;
 
-          postPatch = ''
-            patchShebangs bootstrap
-            ./bootstrap
-          '';
-
-          nativeBuildInputs = with pkgs; [
-            autoconf
-            automake
-            pkg-config
-          ];
-
+          nativeBuildInputs = with pkgs; [ autoPatchelfHook ];
           buildInputs = with pkgs; [ glib ];
 
-          configureFlags = [ "--localstatedir=/var" ];
+          installPhase = ''
+            runHook preInstall
 
-          postInstall = ''
-            make sysconfigdir=$out/etc/conf.d install
+            # Install binary
+            install -Dm755 preload $out/bin/preload
+
+            # Install config
+            install -Dm644 preload.conf $out/etc/conf.d/preload.conf
+
+            runHook postInstall
           '';
 
           meta = with pkgs.lib; {
@@ -104,7 +100,7 @@
 
               serviceConfig = {
                 Type = "simple";
-                ExecStart = "${cfg.package}/bin/preload --foreground";
+                ExecStart = "${cfg.package}/bin/preload --foreground --conffile ${cfg.package}/etc/conf.d/preload.conf --statefile /var/lib/preload/preload.state --logfile ''";
                 Restart = "on-failure";
 
                 # Hardening
