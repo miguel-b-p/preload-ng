@@ -35,12 +35,15 @@ jobs:
           # 2. Compilar
           make
           
-          # 3. Testar
-          make check
-
-      - name: 📦 Upload de Binário (preload-ng)
-        # O binário 'preload-ng' é gerado em 'src/' que, quando a compilação
-        # é feita de 'preload-src', o caminho completo é 'preload-src/src/'.
+          # 3. Testar (Com Lógica de Debug)
+          echo "--- Iniciando Testes (make check) ---"
+          if ! make check; then
+            echo "--- Falha nos Testes. Exibindo Conteúdo de test-suite.log ---"
+            # O log de falha é gerado em preload-src/src/test-suite.log
+            cat src/test-suite.log
+            exit 1 # Força a falha do job
+          fi
+          echo "--- Testes Concluídos com Sucesso ---"
         uses: actions/upload-artifact@v4
         with:
           name: preload-ng-daemon
