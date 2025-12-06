@@ -44,6 +44,9 @@ jobs:
             exit 1 # Força a falha do job
           fi
           echo "--- Testes Concluídos com Sucesso ---"
+
+      - name: 📦 Upload de Binário (preload-ng)
+        # O 'uses' e 'with' devem ser filhos diretos de '- name'
         uses: actions/upload-artifact@v4
         with:
           name: preload-ng-daemon
