@@ -1,0 +1,53 @@
+name: CI Preload-ng Daemon
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛑 Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Instalar Dependências de Build (Autotools & GLib)
+        run: |
+          # build-essential: Instala gcc, make, etc.
+          # autotools: Ferramentas de configuração (autoconf, automake, libtool).
+          # libglib2.0-dev: Dependência crítica do projeto (GLib >= 2.14).
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake libtool pkg-config libglib2.0-dev
+
+      - name: ⚙️ Configurar Projeto (Autotools no 'preload-src')
+        run: |
+          # Navega para o subdiretório que contém 'configure.ac' e 'Makefile.am'
+          cd preload-src
+          
+          # 1. Gera o script 'configure' e Makefiles
+          autoreconf -i
+          
+          # 2. Executa o script de configuração para gerar o Makefile principal na raiz.
+          # O Autotools geralmente permite que o diretório de build seja diferente do diretório de origem.
+          # Usamos '--srcdir=.' para indicar que estamos no diretório fonte.
+          ./configure
+
+      - name: 🏗️ Compilar Projeto
+        # O 'make' de nível superior (que está na raiz) irá executar a compilação
+        # navegando para os subdiretórios 'src' e 'doc' conforme definido no Makefile.
+        run: make
+
+      - name: 🧪 Executar Testes (make check)
+        # Executa a suíte de testes do projeto C (se implementada via 'make check').
+        run: make check
+
+      - name: 📦 Upload de Binário (preload-ng)
+        # Salva o executável 'preload-ng', que é gerado no subdiretório 'src/' (relativo à raiz).
+        # Este é o caminho onde o binário final deve estar após a compilação.
+        uses: actions/upload-artifact@v4
+        with:
+          name: preload-ng-daemon
+          path: ./src/preload-ng
