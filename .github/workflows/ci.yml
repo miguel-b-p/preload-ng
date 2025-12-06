@@ -16,10 +16,12 @@ jobs:
 
       - name: 🛠️ Instalar Dependências de Build (Autotools & GLib)
         run: |
+          # build-essential: Instala gcc, make, etc.
+          # autotools: Ferramentas de configuração.
+          # libglib2.0-dev: Dependência crítica do projeto (GLib >= 2.14).
+          # help2man: Remove warnings de man page
           sudo apt-get update
-          sudo apt-get install -y build-essential autoconf automake libtool pkg-config libglib2.0-dev
-          # Opcional: Instala help2man para remover o WARNING
-          sudo apt-get install -y help2man
+          sudo apt-get install -y build-essential autoconf automake libtool pkg-config libglib2.0-dev help2man
 
       - name: 🏗️ Configurar, Compilar e Testar Projeto
         run: |
@@ -29,13 +31,12 @@ jobs:
           autoreconf -i
           ./configure
           
-          # 2. Aplicar Permissão de Execução (NOVA CORREÇÃO)
-          chmod +x src/runtests.sh
-          # Adicione o test-driver também por segurança, embora geralmente seja gerado com permissão
-          chmod +x src/test-driver
-          
-          # 3. Compilar
+          # 2. Compilar: Cria o executável 'preload-ng' e os scripts de teste
           make
+          
+          # 3. Aplicar Permissão de Execução (APENAS NO runtests.sh)
+          # 'test-driver' é gerado e deve ter permissão correta.
+          chmod +x src/runtests.sh
           
           # 4. Testar (Com Lógica de Debug)
           echo "--- Iniciando Testes (make check) ---"
