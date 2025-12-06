@@ -1,0 +1,54 @@
+name: CI Preload-ng Daemon
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛑 Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Instalar Dependências de Build (Autotools & GLib)
+        run: |
+          # build-essential: Instala gcc, make, etc.
+          # autotools: Ferramentas de configuração.
+          # libglib2.0-dev: Dependência crítica do projeto (GLib >= 2.14).
+          # help2man: Remove warnings de man page
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake libtool pkg-config libglib2.0-dev help2man
+
+      - name: 🏗️ Configurar, Compilar e Testar Projeto
+        run: |
+          cd preload-src
+          
+          # 1. Configurar
+          autoreconf -i
+          ./configure
+          
+          # 2. Compilar: Cria o executável 'preload-ng' e os scripts de teste
+          make
+          
+          # 3. Aplicar Permissão de Execução (APENAS NO runtests.sh)
+          # 'test-driver' é gerado e deve ter permissão correta.
+          chmod +x src/runtests.sh
+          
+          # 4. Testar (Com Lógica de Debug)
+          echo "--- Iniciando Testes (make check) ---"
+          if ! make check; then
+            echo "--- Falha nos Testes. Exibindo Conteúdo de test-suite.log ---"
+            cat src/test-suite.log
+            exit 1
+          fi
+          echo "--- Testes Concluídos com Sucesso ---"
+
+      - name: 📦 Upload de Binário (preload-ng)
+        uses: actions/upload-artifact@v4
+        with:
+          name: preload-ng-daemon
+          path: ./preload-src/src/preload-ng

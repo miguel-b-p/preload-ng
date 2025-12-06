@@ -1,0 +1,45 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+  check_run:
+    types: [completed]
+
+jobs:
+  automerge:
+    # Apenas executa se o PR foi aberto pelo Dependabot
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 🔐 Configurar GitHub CLI
+        uses: actions/setup-gh@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }} # Token padrão do GitHub
+
+      - name: 🔄 Habilitar Auto-Merge se for seguro
+        # O script verifica as condições de segurança antes de habilitar o auto-merge
+        run: |
+          PR_URL=${{ github.event.pull_request.html_url }}
+          PR_NUMBER=$(basename $PR_URL)
+          
+          # 1. Verifica se o PR foi aprovado ou se não precisa de aprovação
+          APPROVALS=$(gh pr checks $PR_NUMBER --json checks --jq '.[].checks.state | select(. == "SUCCESS" or . == "SKIPPED")')
+          
+          # 2. Verifica se a suíte de CI foi concluída com sucesso
+          CI_STATUS=$(gh pr checks $PR_NUMBER --json status --jq '.status')
+          
+          # Ação: Habilita o auto-merge APENAS se o status do CI for "SUCCESS"
+          if [[ "$CI_STATUS" == "SUCCESS" ]]; then
+            echo "CI concluído com sucesso. Habilitando auto-merge."
+            
+            # Comando para habilitar o auto-merge, usando 'merge' como método
+            gh pr merge $PR_NUMBER --auto --merge
+            
+          else
+            echo "CI status não é SUCCESS. Merge automático não habilitado."
+            exit 0
+          fi

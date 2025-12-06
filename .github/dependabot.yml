@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Habilita o Dependabot para verificar as Actions do GitHub
+  - package-ecosystem: "github-actions"
+    directory: "/" # Procura workflows em .github/workflows
+    schedule:
+      interval: "weekly" # Verifica uma vez por semana
+    commit-message:
+      prefix: "fix"
+      include: "scope"
+    labels:
+      - "dependabot"
+      - "actions"
+      - "ci"
