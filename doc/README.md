@@ -35,7 +35,7 @@ Preload is an adaptive readahead daemon that monitors application usage and pref
 ```bash
 git clone https://github.com/miguel-b-p/preload-ng.git
 cd preload-ng/scripts
-bash install.sh
+bash build.sh
 ```
 
 ### Using Nix Flakes

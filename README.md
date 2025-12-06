@@ -25,7 +25,7 @@ Preload monitors which applications you use and learns your usage patterns throu
 ```bash
 git clone https://github.com/miguel-b-p/preload-ng.git
 cd preload-ng/scripts
-bash install.sh
+bash build.sh
 ```
 
 ### Using Nix Flakes
@@ -93,7 +93,7 @@ preload-ng/
 ├── preload-src/  # Source code
 ├── doc/          # Documentation
 ├── changelogs/   # Version changelogs
-└── scripts/      # Utility scripts (install.sh)
+└── scripts/      # Utility scripts (build.sh)
 ```
 
 ---
