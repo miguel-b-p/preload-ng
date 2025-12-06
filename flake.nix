@@ -25,14 +25,10 @@
 
           # Remove installation of files to /var directories (not allowed in Nix sandbox)
           # and run bootstrap to generate configure script
+          patches = [ ./disable-var-install.patch ];
+
           postPatch = ''
             patchShebangs bootstrap
-
-            # Remove log_DATA and pkglocalstate_DATA from Makefile.am
-            # These try to install to /var which is not allowed in Nix
-            sed -i '/^log_DATA/d' Makefile.am
-            sed -i '/^pkglocalstate_DATA/d' Makefile.am
-
             ./bootstrap
           '';
 
@@ -116,14 +112,18 @@
                 ProtectHome = true;
                 PrivateTmp = true;
                 NoNewPrivileges = true;
+
+                # Automatically create /var/lib/preload and /var/log/preload
+                StateDirectory = "preload";
+                #LogsDirectory = "preload"; # preload-ng might write directly to /var/log/preload.log, so we let it access /var/log for now or check config
+
                 ReadWritePaths = [
-                  "/var/lib/preload"
                   "/var/log"
                 ];
               };
 
               preStart = ''
-                mkdir -p /var/lib/preload
+                # /var/lib/preload is created by StateDirectory
                 mkdir -p /var/log
               '';
             };
