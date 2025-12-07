@@ -70,7 +70,7 @@ Add to your `flake.nix`:
 }
 ```
 
-> **TODO:** Add NixOS module options to configure `/etc/preload.conf` settings declaratively (e.g., `services.preload.settings.cycle`, `services.preload.settings.memfree`, etc.).
+> All settings from `preload.conf` are available as declarative options via `services.preload-ng.settings`. See [doc/README.md](doc/README.md#nixos-declarative-configuration) for the complete configuration reference.
 
 ---
 

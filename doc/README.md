@@ -80,6 +80,45 @@ Add to your `flake.nix`:
 }
 ```
 
+##### NixOS Declarative Configuration
+
+All settings from `preload.conf` are available as NixOS options:
+
+```nix
+{
+  services.preload-ng = {
+    enable = true;
+    settings = {
+      # Model settings
+      cycle = 20;              # Time quantum in seconds
+      useCorrelation = true;   # Use correlation in predictions
+      minSize = 2000000;       # Minimum map size to track (bytes)
+
+      # Memory thresholds (percentages, -100 to 100)
+      memTotal = -10;
+      memFree = 50;
+      memCached = 0;
+      memBuffers = 50;
+
+      # System settings
+      doScan = true;           # Monitor running processes
+      doPredict = true;        # Enable prefetching
+      autoSave = 3600;         # Auto-save period (seconds)
+
+      # File filtering
+      mapPrefix = "/usr/;/lib;/var/cache/;!/";
+      exePrefix = "!/usr/sbin/;!/usr/local/sbin/;/usr/;!/";
+
+      # I/O settings
+      processes = 30;          # Parallel readahead processes
+      sortStrategy = 3;        # 0=none, 1=path, 2=inode, 3=block
+    };
+  };
+}
+```
+
+See [Configuration](#configuration) below for detailed explanations of each option.
+
 ---
 
 ## How It Works
