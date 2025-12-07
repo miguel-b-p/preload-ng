@@ -2,6 +2,7 @@
 # Installation script for preload-ng (precompiled binary)
 # This script installs the precompiled binary from bin/
 
+# Thanks to Aliel for testing the script and pointing out the issue with the service file!
 set -e
 
 # Colors for output
