@@ -114,6 +114,13 @@ create_directories() {
     print_info "Creating required directories..."
     mkdir -p "$VAR_LIB"
     chmod 755 "$VAR_LIB"
+
+    # Create log directory if it doesn't exist
+    if [ ! -d "/usr/local/var/log" ]; then
+        mkdir -p "/usr/local/var/log"
+        chmod 755 "/usr/local/var/log"
+    fi
+
     print_success "Directories created"
 }
 
