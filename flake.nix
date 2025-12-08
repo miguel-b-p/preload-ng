@@ -17,7 +17,7 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        preload-ng = pkgs.stdenv.mkDerivation rec {
+        preload-ng-bin = pkgs.stdenv.mkDerivation rec {
           pname = "preload-ng";
           version = "0.6.6";
 
@@ -51,16 +51,38 @@
             maintainers = [ ];
           };
         };
+
+        preload-ng-src = pkgs.stdenv.mkDerivation rec {
+          pname = "preload-ng";
+          version = "0.6.6";
+
+          src = ./preload-src;
+
+          nativeBuildInputs = with pkgs; [
+            autoreconfHook
+            pkg-config
+          ];
+          buildInputs = with pkgs; [ glib ];
+
+          meta = with pkgs.lib; {
+            description = "Adaptive readahead daemon for Linux";
+            homepage = "https://github.com/miguel-b-p/preload-ng";
+            license = licenses.gpl2Only;
+            platforms = platforms.linux;
+            mainProgram = "preload";
+            maintainers = [ ];
+          };
+        };
       in
       {
         packages = {
-          default = preload-ng;
-          inherit preload-ng;
+          default = preload-ng-bin;
+          inherit preload-ng-bin preload-ng-src;
         };
 
         # Development shell with build dependencies
         devShells.default = pkgs.mkShell {
-          inputsFrom = [ preload-ng ];
+          inputsFrom = [ preload-ng-src ];
           packages = with pkgs; [
             gdb
             valgrind
@@ -79,7 +101,11 @@
         }:
         let
           cfg = config.services.preload-ng;
-          preload-pkg = self.packages.${pkgs.system}.preload-ng;
+          preload-pkg =
+            if cfg.usePrecompiled then
+              self.packages.${pkgs.system}.preload-ng-bin
+            else
+              self.packages.${pkgs.system}.preload-ng-src;
 
           # Generate preload.conf content from options
           configContent = ''
@@ -141,6 +167,12 @@
         {
           options.services.preload-ng = {
             enable = lib.mkEnableOption "preload-ng daemon";
+
+            usePrecompiled = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Whether to use the precompiled binary (true) or compile from source (false).";
+            };
 
             debug = lib.mkOption {
               type = lib.types.bool;
@@ -296,7 +328,9 @@
 
       # Overlay for use in other flakes
       overlays.default = final: prev: {
-        preload-ng = self.packages.${prev.system}.preload-ng;
+        preload-ng = self.packages.${prev.system}.default;
+        preload-ng-bin = self.packages.${prev.system}.preload-ng-bin;
+        preload-ng-src = self.packages.${prev.system}.preload-ng-src;
       };
     };
 }

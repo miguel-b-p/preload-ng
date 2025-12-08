@@ -89,6 +89,7 @@ All settings from `preload.conf` are available as NixOS options:
   services.preload-ng = {
     enable = true;
     debug = false;             # Enable verbose debug output (default: false)
+    usePrecompiled = true;     # Use precompiled binary (true) or compile from source (false)
     settings = {
       # Model settings
       cycle = 20;              # Time quantum in seconds
