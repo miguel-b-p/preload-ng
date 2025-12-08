@@ -70,7 +70,7 @@ Add to your `flake.nix`:
 }
 ```
 
-> All settings from `preload.conf` are available as declarative options via `services.preload-ng.settings`. See [doc/README.md](doc/README.md#nixos-declarative-configuration) for the complete configuration reference.
+> All settings from `preload.conf` are available as declarative options via `services.preload-ng.settings`. A `debug` option is also available to enable verbose output. See [doc/README.md](doc/README.md#nixos-declarative-configuration) for the complete configuration reference.
 
 ---
 

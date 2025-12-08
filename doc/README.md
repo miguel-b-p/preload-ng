@@ -88,6 +88,7 @@ All settings from `preload.conf` are available as NixOS options:
 {
   services.preload-ng = {
     enable = true;
+    debug = false;             # Enable verbose debug output (default: false)
     settings = {
       # Model settings
       cycle = 20;              # Time quantum in seconds
