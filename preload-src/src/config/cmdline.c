@@ -26,12 +26,12 @@
 
 #include <getopt.h>
 
-#define DEFAULT_LOGLEVEL_STRING		STRINGIZE(DEFAULT_LOGLEVEL)
-#define DEFAULT_NICELEVEL_STRING	STRINGIZE(DEFAULT_NICELEVEL)
+#define DEFAULT_LOGLEVEL_STRING		G_STRINGIFY(DEFAULT_LOGLEVEL)
+#define DEFAULT_NICELEVEL_STRING	G_STRINGIFY(DEFAULT_NICELEVEL)
 
 /* TODO: GOption? */
 
-static const struct option const opts[] = {
+static const struct option opts[] = {
   {"help", 0, 0, 'h'},
   {"version", 0, 0, 'v'},
   {"conffile", 1, 0, 'c'},
@@ -45,7 +45,7 @@ static const struct option const opts[] = {
 };
 
 static const char *help2man_str = "Display command line parameters and their default values, and exit.";	/* help2man */
-static const char const *opts_help[] = {
+static const char *opts_help[] = {
   "Display this information and exit.",	/* help */
   "Display version information and exit.",	/* version */
   "Set configuration file. Empty string means no conf file.",	/* conffile */
@@ -56,7 +56,7 @@ static const char const *opts_help[] = {
   "Set the verbosity level.  Levels 0 to 10 are recognized.",	/* verbose */
   "Debug mode: --logfile '' --foreground --verbose 9",	/* debug */
 };
-static const char const *opts_default[] = {
+static const char *opts_default[] = {
   NULL,	/* help */
   NULL,	/* version */
   DEFAULT_CONFFILE,	/* conffile */

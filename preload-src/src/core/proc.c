@@ -86,7 +86,7 @@ accept_file (char *file, char * const *prefix)
 }
 
 size_t
-proc_get_maps (pid_t pid, GHashTable *maps, GSet **exemaps)
+proc_get_maps (pid_t pid, GHashTable *maps, GPtrArray **exemaps)
 {
   char name[32];
   FILE *in;
@@ -94,7 +94,7 @@ proc_get_maps (pid_t pid, GHashTable *maps, GSet **exemaps)
   char buffer[1024];
 
   if (exemaps)
-    *exemaps = g_set_new ();
+    *exemaps = g_ptr_array_new ();
   
   g_snprintf (name, sizeof (name), "/proc/%d/maps", pid);
   in = fopen (name, "r");
@@ -142,7 +142,7 @@ proc_get_maps (pid_t pid, GHashTable *maps, GSet **exemaps)
 	if (exemaps) {
 	  preload_exemap_t *exemap;
 	  exemap = preload_exemap_new (map);  /* This takes a ref */
-	  g_set_add (*exemaps, exemap);
+	  g_ptr_array_add (*exemaps, exemap);
 	  /* exemap now owns the reference, so we're done with it */
 	} else if (map_is_new) {
 	  /* No exemaps and map is new (not from maps table) - we need to free it

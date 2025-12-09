@@ -27,9 +27,7 @@
 
 #include <sys/ioctl.h>
 #include <sys/wait.h>
-#ifdef HAVE_LINUX_FS_H
 #include <linux/fs.h>
-#endif
 
 static void
 set_block(preload_map_t *file, gboolean use_inode)

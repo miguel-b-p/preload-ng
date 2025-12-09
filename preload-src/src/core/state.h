@@ -39,8 +39,8 @@ typedef struct _preload_exe_t
   char *path; /* absolute path of the executable. */
   int time; /* total time that this has been running, ever. */
   int update_time; /* last time it was probed. */
-  GSet *markovs; /* set of markov chains with other exes. */
-  GSet *exemaps; /* set of exemap structures. */
+  GPtrArray *markovs; /* set of markov chains with other exes. */
+  GPtrArray *exemaps; /* set of exemap structures. */
 
   /* runtime: */
   size_t size; /* sum of the size of the maps, in bytes. */
@@ -153,7 +153,7 @@ gboolean preload_map_equal (preload_map_t *a, preload_map_t *b);
 /* exemap */
 
 preload_exemap_t * preload_exemap_new (preload_map_t *map);
-void preload_exemap_free (preload_exemap_t *exemap);
+void preload_exemap_free (gpointer data, gpointer user_data);
 void preload_exemap_foreach (GHFunc func, gpointer user_data);
 
 
@@ -171,7 +171,7 @@ void preload_markov_foreach (GFunc func, gpointer user_data);
 /* exe */
 
 /* duplicates path */
-preload_exe_t * preload_exe_new (const char *path, gboolean running, GSet *exemaps);
+preload_exe_t * preload_exe_new (const char *path, gboolean running, GPtrArray *exemaps);
 void preload_exe_free (preload_exe_t *);
 preload_exemap_t * preload_exe_map_new (preload_exe_t *exe, preload_map_t *map);
 

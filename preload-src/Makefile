@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -std=c11 -D_GNU_SOURCE -Wall -Wextra -Wno-unused-parameter -Wno-unused-result
+CFLAGS = -std=c11 -D_GNU_SOURCE -DVERSION=\"0.6.4\" -DPACKAGE=\"preload\" -DPACKAGE_STRING=\"preload-0.6.4\" -DPACKAGE_NAME=\"preload\" -DPACKAGE_BUGREPORT=\"https://github.com/preload-ng\" -DSYSCONFDIR=\"/etc\" -DPKGLOCALSTATEDIR=\"/var/lib/preload\" -DLOGDIR=\"/var/log\" -Wall -Wextra -Wno-unused-parameter -Wno-unused-result
 CFLAGS += $(shell pkg-config --cflags glib-2.0)
 CFLAGS += -Isrc/core -Isrc/daemon -Isrc/config -Isrc/utils
 LDFLAGS = $(shell pkg-config --libs glib-2.0) -lm

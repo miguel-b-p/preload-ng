@@ -165,8 +165,9 @@ preload_exemap_new (preload_map_t *map)
 
 
 void
-preload_exemap_free (preload_exemap_t *exemap)
+preload_exemap_free (gpointer data, gpointer G_GNUC_UNUSED user_data)
 {
+  preload_exemap_t *exemap = (preload_exemap_t *)data;
   g_return_if_fail (exemap);
 
   if (exemap->map)
@@ -191,7 +192,7 @@ static void
 exe_exemap_foreach (gpointer G_GNUC_UNUSED key, preload_exe_t *exe, exemap_foreach_context_t *ctx)
 {
   ctx->exe = exe;
-  g_set_foreach (exe->exemaps, (GFunc)exe_exemap_callback, ctx);
+  g_ptr_array_foreach (exe->exemaps, (GFunc)exe_exemap_callback, ctx);
 }
 
 void
@@ -238,8 +239,8 @@ preload_markov_new (preload_exe_t *a, preload_exe_t *b, gboolean initialize)
     memset (markov->weight, 0, sizeof (markov->weight));
     preload_markov_state_changed (markov);
   }
-  g_set_add (a->markovs, markov);
-  g_set_add (b->markovs, markov);
+  g_ptr_array_add (a->markovs, markov);
+  g_ptr_array_add (b->markovs, markov);
   return markov;
 }
 
@@ -277,10 +278,10 @@ preload_markov_free (preload_markov_t *markov, preload_exe_t *from)
     preload_exe_t *other;
     g_assert (markov->a == from || markov->b == from);
     other = markov_other_exe (markov, from);
-    g_set_remove (other->markovs, markov);
+    g_ptr_array_remove_fast (other->markovs, markov);
   } else {
-    g_set_remove (markov->a->markovs, markov);
-    g_set_remove (markov->b->markovs, markov);
+    g_ptr_array_remove_fast (markov->a->markovs, markov);
+    g_ptr_array_remove_fast (markov->b->markovs, markov);
   }
   g_free (markov);
 }
@@ -305,7 +306,7 @@ static void
 exe_markov_foreach (gpointer G_GNUC_UNUSED key, preload_exe_t *exe, markov_foreach_context_t *ctx)
 {
   ctx->exe = exe;
-  g_set_foreach (exe->markovs, (GFunc)exe_markov_callback, ctx);
+  g_ptr_array_foreach (exe->markovs, (GFunc)exe_markov_callback, ctx);
 }
 
 void
@@ -387,7 +388,7 @@ exe_add_map_size (preload_exemap_t *exemap, preload_exe_t *exe)
 
 
 preload_exe_t *
-preload_exe_new (const char *path, gboolean running, GSet *exemaps)
+preload_exe_new (const char *path, gboolean running, GPtrArray *exemaps)
 {
   preload_exe_t *exe;
 
@@ -404,11 +405,11 @@ preload_exe_new (const char *path, gboolean running, GSet *exemaps)
     exe->update_time = exe->running_timestamp = -1;
   }
   if (!exemaps)
-    exe->exemaps = g_set_new ();
+    exe->exemaps = g_ptr_array_new ();
   else
     exe->exemaps = exemaps;
-  g_set_foreach (exe->exemaps, (GFunc)exe_add_map_size, exe);
-  exe->markovs = g_set_new ();
+  g_ptr_array_foreach (exe->exemaps, (GFunc)exe_add_map_size, exe);
+  exe->markovs = g_ptr_array_new ();
   return exe;
 }
 
@@ -419,13 +420,13 @@ preload_exe_free (preload_exe_t *exe)
   g_return_if_fail (exe);
 
   if (exe->exemaps) {
-    g_set_foreach (exe->exemaps, (GFunc)preload_exemap_free, NULL);
-    g_set_free (exe->exemaps);
+    g_ptr_array_foreach (exe->exemaps, (GFunc)preload_exemap_free, NULL);
+    g_ptr_array_free (exe->exemaps, TRUE);
     exe->exemaps = NULL;
   }
   if (exe->markovs) {
-    g_set_foreach (exe->markovs, (GFunc)preload_markov_free, exe);
-    g_set_free (exe->markovs);
+    g_ptr_array_foreach (exe->markovs, (GFunc)preload_markov_free, exe);
+    g_ptr_array_free (exe->markovs, TRUE);
     exe->markovs = NULL;
   }
   if (exe->path) {
@@ -445,7 +446,7 @@ preload_exe_map_new (preload_exe_t *exe, preload_map_t *map)
   g_return_val_if_fail (map, NULL);
 
   exemap = preload_exemap_new (map);
-  g_set_add (exe->exemaps, exemap);
+  g_ptr_array_add (exe->exemaps, exemap);
   exe_add_map_size (exemap, exe);
   return exemap;
 }
@@ -482,8 +483,8 @@ preload_state_unregister_exe (preload_exe_t *exe)
   g_return_if_fail (g_hash_table_lookup (state->exes, exe->path));
 
   if (exe->markovs) {
-    g_set_foreach (exe->markovs, (GFunc)preload_markov_free, exe);
-    g_set_free (exe->markovs);
+    g_ptr_array_foreach (exe->markovs, (GFunc)preload_markov_free, exe);
+    g_ptr_array_free (exe->markovs, TRUE);
     exe->markovs = NULL;
   }
   g_hash_table_remove (state->exes, exe->path);
@@ -729,8 +730,13 @@ read_markov (read_context_t *rc)
 #include "vomm.h"
 
 static void
-set_running_process_callback (pid_t G_GNUC_UNUSED pid, const char *path, int time)
+set_running_process_callback (gpointer key, gpointer value, gpointer user_data)
 {
+  pid_t pid = (pid_t)GPOINTER_TO_INT(key);
+  const char *path = (const char *)value;
+  int time = GPOINTER_TO_INT(user_data);
+  (void)pid;
+
   preload_exe_t *exe;
 
   exe = g_hash_table_lookup (state->exes, path);
@@ -746,8 +752,9 @@ set_running_process_callback (pid_t G_GNUC_UNUSED pid, const char *path, int tim
 }
 
 static void
-set_markov_state_callback (preload_markov_t *markov)
+set_markov_state_callback (gpointer data, gpointer G_GNUC_UNUSED user_data)
 {
+  preload_markov_t *markov = (preload_markov_t *)data;
   markov->state = markov_state (markov);
 }
 
@@ -949,8 +956,12 @@ write_map (preload_map_t *map, gpointer G_GNUC_UNUSED data, write_context_t *wc)
 
 
 static void
-write_badexe (char *path, int update_time, write_context_t *wc)
+write_badexe (gpointer key, gpointer value, gpointer user_data)
 {
+  char *path = (char *)key;
+  int update_time = GPOINTER_TO_INT(value);
+  write_context_t *wc = (write_context_t *)user_data;
+
   char *uri;
 
   uri = g_filename_to_uri (path, NULL, &(wc->err));
@@ -1058,7 +1069,7 @@ write_state (GIOChannel *f)
 
 
 static gboolean
-true_func (void)
+true_func (gpointer G_GNUC_UNUSED key, gpointer G_GNUC_UNUSED value, gpointer G_GNUC_UNUSED user_data)
 {
   return TRUE;
 }
@@ -1213,7 +1224,7 @@ static const char *autosave_statefile;
 
 
 static gboolean
-preload_state_autosave (void)
+preload_state_autosave (gpointer G_GNUC_UNUSED user_data)
 {
   preload_state_save (autosave_statefile);
 

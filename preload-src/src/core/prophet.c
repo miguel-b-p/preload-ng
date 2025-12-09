@@ -26,6 +26,7 @@
 #include "conf.h"
 #include "state.h"
 #include "readahead.h"
+#include "vomm.h"
 
 #include <math.h>
 
@@ -93,9 +94,11 @@ markov_bid_for_exe (preload_markov_t *markov,
 
 
 static void
-markov_bid_in_exes (preload_markov_t *markov)
+markov_bid_in_exes (gpointer data, gpointer G_GNUC_UNUSED user_data)
 {
+  preload_markov_t *markov = (preload_markov_t *)data;
   double correlation;
+
 
   if (!markov->weight[markov->state][markov->state])
     return;
@@ -110,7 +113,7 @@ markov_bid_in_exes (preload_markov_t *markov)
 
 
 static void
-map_zero_prob (preload_map_t *map)
+map_zero_prob (preload_map_t *map, gpointer G_GNUC_UNUSED data)
 {
   map->lnprob = 0;
 }
@@ -125,7 +128,7 @@ map_prob_compare (const preload_map_t **pa, const preload_map_t **pb)
 
 
 static void
-exe_zero_prob (gpointer G_GNUC_UNUSED key, preload_exe_t *exe)
+exe_zero_prob (gpointer G_GNUC_UNUSED key, preload_exe_t *exe, gpointer G_GNUC_UNUSED data)
 {
   exe->lnprob = 0;
 }
@@ -146,8 +149,11 @@ exe_zero_prob (gpointer G_GNUC_UNUSED key, preload_exe_t *exe)
  *
  */
 static void
-exemap_bid_in_maps (preload_exemap_t *exemap, preload_exe_t *exe)
+exemap_bid_in_maps (gpointer key, gpointer value, gpointer G_GNUC_UNUSED user_data)
 {
+  preload_exemap_t *exemap = (preload_exemap_t *)key;
+  preload_exe_t *exe = (preload_exe_t *)value;
+
   if (exe_is_running (exe)) {
     /* if exe is running, we vote against the map,
      * since it's most prolly in the memory already. */
@@ -159,9 +165,9 @@ exemap_bid_in_maps (preload_exemap_t *exemap, preload_exe_t *exe)
 }
 
 
-static void exe_prob_print (gpointer G_GNUC_UNUSED key, preload_exe_t *exe) G_GNUC_UNUSED;
+static void exe_prob_print (gpointer G_GNUC_UNUSED key, preload_exe_t *exe, gpointer G_GNUC_UNUSED data) G_GNUC_UNUSED;
 static void
-exe_prob_print (gpointer G_GNUC_UNUSED key, preload_exe_t *exe)
+exe_prob_print (gpointer G_GNUC_UNUSED key, preload_exe_t *exe, gpointer G_GNUC_UNUSED data)
 {
   if (!exe_is_running (exe))
     fprintf (stderr, "ln(prob(~EXE)) = \t%13.10lf\t%s\n", exe->lnprob, exe->path);

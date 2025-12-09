@@ -34,7 +34,7 @@ typedef struct _preload_memory_t
 void proc_get_memstat (preload_memory_t *mem);
 
 /* returns sum of length of maps, in bytes, or 0 if failed */
-size_t proc_get_maps (pid_t pid, GHashTable *maps, GSet **exemaps);
+size_t proc_get_maps (pid_t pid, GHashTable *maps, GPtrArray **exemaps);
 
 /* foreach process running, passes pid as key and exe path as value */
 void proc_foreach (GHFunc func, gpointer user_data);

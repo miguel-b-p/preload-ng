@@ -113,6 +113,7 @@ check_exe_validity(gpointer key, preload_exe_t *exe, cleanup_context_t *ctx)
   }
 }
 
+/* Unused function
 static void
 check_map_validity(preload_map_t *map, gpointer data, cleanup_context_t *ctx)
 {
@@ -123,6 +124,7 @@ check_map_validity(preload_map_t *map, gpointer data, cleanup_context_t *ctx)
     ctx->maps_to_remove = g_slist_prepend(ctx->maps_to_remove, map);
   }
 }
+*/
 
 static void
 remove_invalid_exe(preload_exe_t *exe, cleanup_context_t *ctx)

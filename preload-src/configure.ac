@@ -30,7 +30,6 @@ AC_CHECK_HEADERS([stdlib.h string.h strings.h inttypes.h sys/times.h])
 
 # Checks for typedefs and structures.
 AC_C_CONST
-AC_C_STRINGIZE
 
 # Checks for compiler characteristics.
 changequote(,)dnl

@@ -77,13 +77,13 @@ preload_conf_load (const char *conffile, gboolean fail)
 #define free_string_list(v) g_strfreev(v)
 #define free_string(v) g_free(v)
 #define confkey(grp, type, key, def, unit) \
-	dummyconf.grp.key = get_##type (STRINGIZE(grp), STRINGIZE(key), unit); \
+	dummyconf.grp.key = get_##type (G_STRINGIFY(grp), G_STRINGIFY(key), unit); \
 	if (!e) { \
 	  free_##type (newconf.grp.key); \
 	  newconf.grp.key = dummyconf.grp.key; \
 	} else if (e->code != G_KEY_FILE_ERROR_KEY_NOT_FOUND) { \
 	  g_log (G_LOG_DOMAIN, flags, "failed loading conf key %s.%s: %s", \
-		 STRINGIZE(grp), STRINGIZE(key), e->message); \
+		 G_STRINGIFY(grp), G_STRINGIFY(key), e->message); \
 	  g_error_free (e); \
 	  return; \
 	} else { \
@@ -133,9 +133,9 @@ preload_conf_dump_log (void)
 	    fprintf (stderr, ";%s", *p++); \
 	} G_STMT_END 
 #define confkey(grp, type, key, def, unit) \
-	if (strcmp (STRINGIZE(grp), curgrp)) \
-	  fprintf (stderr, "[%s]\n", curgrp = STRINGIZE(grp)); \
-	fprintf (stderr, "%s = ", STRINGIZE(key)); \
+	if (strcmp (G_STRINGIFY(grp), curgrp)) \
+	  fprintf (stderr, "[%s]\n", curgrp = G_STRINGIFY(grp)); \
+	fprintf (stderr, "%s = ", G_STRINGIFY(key)); \
 	print_##type (conf->grp.key, unit); \
 	fprintf (stderr, "\n");
 #include "confkeys.h"
