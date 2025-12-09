@@ -4,8 +4,11 @@ CFLAGS += $(shell pkg-config --cflags glib-2.0)
 CFLAGS += -Isrc/core -Isrc/daemon -Isrc/config -Isrc/utils
 LDFLAGS = $(shell pkg-config --libs glib-2.0) -lm
 
-SRC_DIRS = src/core src/daemon src/config src/utils
-SRCS = $(shell find $(SRC_DIRS) -name '*.c')
+# Source files
+SRCS = src/core/proc.c src/core/readahead.c src/core/madvise_utils.c src/core/vomm.c src/core/prophet.c src/core/model_utils.c src/core/state.c src/core/context.c \
+       src/daemon/preload.c src/daemon/spy.c \
+       src/config/conf.c src/config/cmdline.c \
+       src/utils/time_utils.c src/utils/log.c
 OBJS = $(SRCS:.c=.o)
 DEPS = $(OBJS:.o=.d)
 

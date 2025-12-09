@@ -23,6 +23,7 @@
 #include "common.h"
 #include "cmdline.h"
 #include "preload.h"
+#include "context.h"
 
 #include <getopt.h>
 
@@ -73,9 +74,8 @@ static const char *opts_default[] = {
 static void version_func (void) G_GNUC_NORETURN;
 static void help_func (gboolean err, gboolean help2man) G_GNUC_NORETURN;
 
-
 void
-preload_cmdline_parse (int *argc, char ***argv)
+preload_cmdline_parse (preload_ctx_t *ctx, int *argc, char ***argv)
 {
   for (;;)
     {
@@ -88,26 +88,30 @@ preload_cmdline_parse (int *argc, char ***argv)
       switch (i)
 	{
 	case 'c':
-	  conffile = optarg;
+	  g_free(ctx->conffile);
+	  ctx->conffile = g_strdup(optarg);
 	  break;
 	case 's':
-	  statefile = optarg;
+	  g_free(ctx->statefile);
+	  ctx->statefile = g_strdup(optarg);
 	  break;
 	case 'l':
-	  logfile = optarg;
+	  g_free(ctx->logfile);
+	  ctx->logfile = g_strdup(optarg);
 	  break;
 	case 'f':
-	  foreground = 1;
+	  ctx->foreground = TRUE;
 	  break;
 	case 'n':
-	  nicelevel = strtol (optarg, NULL, 10);
+	  ctx->nicelevel = strtol (optarg, NULL, 10);
 	  break;
 	case 'V':
 	  preload_log_level = strtol (optarg, NULL, 10);
 	  break;
 	case 'd':
-	  logfile = NULL;
-	  foreground = 1;
+	  g_free(ctx->logfile);
+	  ctx->logfile = NULL;
+	  ctx->foreground = TRUE;
 	  preload_log_level = 9;
 	  break;
 	case 'v':

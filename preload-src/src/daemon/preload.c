@@ -28,23 +28,24 @@
 #include "cmdline.h"
 #include "conf.h"
 #include "state.h"
+#include "context.h"
 
 #include <signal.h>
 #include <grp.h>
 
 /* variables */
 
-const char *conffile = DEFAULT_CONFFILE;
-const char *statefile = DEFAULT_STATEFILE;
-const char *logfile = DEFAULT_LOGFILE;
-int nicelevel = DEFAULT_NICELEVEL;
-int foreground = 0;
+/* variables */
+
+static preload_ctx_t *ctx = NULL;
+
+/* local variables */
 
 
 
 /* local variables */
 
-static GMainLoop *main_loop;
+
 
 
 
@@ -90,19 +91,19 @@ sig_handler_sync (gpointer data)
 {
   switch (GPOINTER_TO_INT (data)) {
     case SIGHUP:
-      preload_conf_load (conffile, FALSE);
-      preload_log_reopen (logfile);
+      preload_conf_load (ctx->conffile, FALSE);
+      preload_log_reopen (ctx->logfile);
       break;
     case SIGUSR1:
       preload_state_dump_log ();
       preload_conf_dump_log ();
       break;
     case SIGUSR2:
-      preload_state_save (statefile);
+      preload_state_save (ctx->statefile);
       break;
     default: /* everything else is an exit request */
       g_message ("exit requested");
-      g_main_loop_quit (main_loop);
+      g_main_loop_quit (ctx->main_loop);
       break;
   }
   return FALSE;
@@ -132,26 +133,32 @@ int
 main (int argc, char **argv)
 {
   /* initialize */
-  preload_cmdline_parse (&argc, &argv);
-  preload_log_init (logfile);
-  preload_conf_load (conffile, TRUE);
+  /* initialize */
+  ctx = preload_context_new();
+  
+  preload_cmdline_parse (ctx, &argc, &argv);
+  
+  preload_log_init (ctx->logfile);
+  preload_conf_load (ctx->conffile, TRUE);
   set_sig_handlers ();
-  if (!foreground)
+  if (!ctx->foreground)
     daemonize ();
-  if (0 > nice (nicelevel))
+  if (0 > nice (ctx->nicelevel))
     g_warning ("%s", strerror (errno));
   g_debug ("starting up");
-  preload_state_load (statefile);
+  preload_state_load (ctx->statefile);
 
   /* main loop */
-  main_loop = g_main_loop_new (NULL, FALSE);
-  preload_state_run (statefile);
-  g_main_loop_run (main_loop);
+  ctx->main_loop = g_main_loop_new (NULL, FALSE);
+  preload_state_run (ctx->statefile);
+  g_main_loop_run (ctx->main_loop);
 
   /* clean up */
-  preload_state_save (statefile);
+  preload_state_save (ctx->statefile);
   if (preload_is_debugging ())
     preload_state_free ();
   g_debug ("exiting");
+  
+  preload_context_free(ctx);
   return EXIT_SUCCESS;
 }
