@@ -40,7 +40,6 @@ dev_mingas
 # OS
 .DS_Store
 Thumbs.db
-core
 
 # env
 .flox
