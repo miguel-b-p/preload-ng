@@ -90,7 +90,7 @@ The original project was last updated in **April 2009** (v0.6.4). **Preload-NG**
 - Fix bugs and memory leaks
 - Implement originally planned features
 
-See [changelogs/0.6.6.md](changelogs/0.6.6.md) for the detailed changelog.
+See [changelogs/README.md](changelogs/README.md) for the detailed changelog.
 
 ---
 
