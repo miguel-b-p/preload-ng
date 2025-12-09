@@ -49,6 +49,8 @@ typedef struct _preload_conf_t
       SORT_INODE = 2,
       SORT_BLOCK = 3
     } sortstrategy;
+    
+    char *prediction_algorithm;  /* "Markov" or "VOMM" */
   } system;
 
 } preload_conf_t;
@@ -58,5 +60,8 @@ extern preload_conf_t conf[1];
 
 void preload_conf_load (const char *conffile, gboolean fail);
 void preload_conf_dump_log (void);
+
+/* Helper to check if VOMM algorithm is selected (handles NULL and quoted values) */
+gboolean preload_is_vomm_algorithm (void);
 
 #endif

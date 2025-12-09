@@ -261,6 +261,33 @@ preload_prophet_readahead (GPtrArray *maps_arr)
 void
 preload_prophet_predict (gpointer data)
 {
+  if (preload_is_vomm_algorithm()) {
+      g_debug("Running VOMM Prediction (algorithm: %s)...", 
+              conf->system.prediction_algorithm ? conf->system.prediction_algorithm : "NULL");
+      
+      /* Reset probabilities to avoid stale values */
+      g_hash_table_foreach (state->exes, (GHFunc)exe_zero_prob, data);
+      g_ptr_array_foreach (state->maps_arr, (GFunc)map_zero_prob, data);
+
+      /* For VOMM, we predict based on the last executed file. 
+         Ideally, we should track the current sequence context. 
+         vomm_predict uses the global context maintained by vomm_update.
+         We just pass NULL or current running exe if needed, but vomm_system tracks context.
+      */
+      vomm_predict();    
+      
+      /* After VOMM predicts (which modifies lnprobs), we propagate to maps */
+      preload_exemap_foreach ((GHFunc)exemap_bid_in_maps, data);
+
+      /* verify: print top exe probabilities for debugging */
+      if (preload_log_level >= 9)
+        g_hash_table_foreach (state->exes, (GHFunc)exe_prob_print, data);
+
+      g_ptr_array_sort (state->maps_arr, (GCompareFunc)map_prob_compare);
+      preload_prophet_readahead (state->maps_arr);
+      return;
+  }
+
   /* reset probabilities that we are gonna compute */
   g_hash_table_foreach (state->exes, (GHFunc)exe_zero_prob, data);
   g_ptr_array_foreach (state->maps_arr, (GFunc)map_zero_prob, data);

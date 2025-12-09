@@ -19,6 +19,8 @@ preload_SOURCES =	\
 		conf.c	\
 		conf.h	\
 		confkeys.h	\
+		vomm.c	\
+		vomm.h	\
 		log.c	\
 		log.h	\
 		madvise_utils.c	\

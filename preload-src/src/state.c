@@ -417,16 +417,21 @@ void
 preload_exe_free (preload_exe_t *exe)
 {
   g_return_if_fail (exe);
-  g_return_if_fail (exe->path);
 
-  g_set_foreach (exe->exemaps, (GFunc)preload_exemap_free, NULL);
-  g_set_free (exe->exemaps);
-  exe->exemaps = NULL;
-  g_set_foreach (exe->markovs, (GFunc)preload_markov_free, exe);
-  g_set_free (exe->markovs);
-  exe->markovs = NULL;
-  g_free (exe->path);
-  exe->path = NULL;
+  if (exe->exemaps) {
+    g_set_foreach (exe->exemaps, (GFunc)preload_exemap_free, NULL);
+    g_set_free (exe->exemaps);
+    exe->exemaps = NULL;
+  }
+  if (exe->markovs) {
+    g_set_foreach (exe->markovs, (GFunc)preload_markov_free, exe);
+    g_set_free (exe->markovs);
+    exe->markovs = NULL;
+  }
+  if (exe->path) {
+    g_free (exe->path);
+    exe->path = NULL;
+  }
   g_free (exe);
 }
 
@@ -459,7 +464,8 @@ shift_preload_markov_new (gpointer G_GNUC_UNUSED key, preload_exe_t *a, preload_
 void
 preload_state_register_exe (preload_exe_t *exe, gboolean create_markovs)
 {
-  g_return_if_fail (!g_hash_table_lookup (state->exes, exe));
+  g_return_if_fail (exe && exe->path);
+  g_return_if_fail (!g_hash_table_lookup (state->exes, exe->path));
 
   exe->seq = ++(state->exe_seq);
   if (create_markovs) {
@@ -472,12 +478,15 @@ preload_state_register_exe (preload_exe_t *exe, gboolean create_markovs)
 void
 preload_state_unregister_exe (preload_exe_t *exe)
 {
-  g_return_if_fail (g_hash_table_lookup (state->exes, exe));
+  g_return_if_fail (exe && exe->path);
+  g_return_if_fail (g_hash_table_lookup (state->exes, exe->path));
 
-  g_set_foreach (exe->markovs, (GFunc)preload_markov_free, exe);
-  g_set_free (exe->markovs);
-  exe->markovs = NULL;
-  g_hash_table_remove (state->exes, exe);
+  if (exe->markovs) {
+    g_set_foreach (exe->markovs, (GFunc)preload_markov_free, exe);
+    g_set_free (exe->markovs);
+    exe->markovs = NULL;
+  }
+  g_hash_table_remove (state->exes, exe->path);
 }
 
 
@@ -717,6 +726,8 @@ read_markov (read_context_t *rc)
 }
 
 
+#include "vomm.h"
+
 static void
 set_running_process_callback (pid_t G_GNUC_UNUSED pid, const char *path, int time)
 {
@@ -726,6 +737,11 @@ set_running_process_callback (pid_t G_GNUC_UNUSED pid, const char *path, int tim
   if (exe) {
     exe->running_timestamp = time;
     state->running_exes = g_slist_prepend (state->running_exes, exe);
+    
+    /* VOMM Update Hook: Record execution event */
+    if (preload_is_vomm_algorithm()) {
+        vomm_update(exe);
+    }
   }
 }
 
@@ -798,6 +814,7 @@ read_state (GIOChannel *f)
 	break;
       } else if (major_ver_run > major_ver_read) {
 	g_warning ("State file is of an old version that I cannot understand anymore, ignoring it");
+
 	break;
       }
 
@@ -1118,6 +1135,7 @@ preload_state_free (void)
   g_slist_free (state->running_exes);
   state->running_exes = NULL;
   g_ptr_array_free (state->maps_arr, TRUE);
+  vomm_cleanup();
   g_debug ("freeing state memory done");
 }
 
@@ -1207,6 +1225,11 @@ preload_state_autosave (void)
 void
 preload_state_run (const char *statefile)
 {
+  if (preload_is_vomm_algorithm()) {
+      if (!vomm_init()) {
+          g_warning("Failed to initialize VOMM algorithm");
+      }
+  }
   g_timeout_add (0, preload_state_tick, NULL);
   if (statefile) {
     autosave_statefile = statefile;

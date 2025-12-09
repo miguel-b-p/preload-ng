@@ -36,6 +36,7 @@ vgcore.*
 
 # Debug
 *.dSYM/
+dev_mingas
 
 # OS
 .DS_Store

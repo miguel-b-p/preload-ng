@@ -127,6 +127,18 @@ check_map_validity(preload_map_t *map, gpointer data, cleanup_context_t *ctx)
 static void
 remove_invalid_exe(preload_exe_t *exe, cleanup_context_t *ctx)
 {
+  /* Guard against exe that was already unregistered or has NULL path */
+  if (!exe || !exe->path) {
+    g_debug("Skipping invalid exe pointer in cleanup");
+    return;
+  }
+  
+  /* Verify exe is still in the hash table before unregistering */
+  if (!g_hash_table_lookup(state->exes, exe->path)) {
+    g_debug("Exe already removed from hash table: %s", exe->path);
+    return;
+  }
+
   g_message("Removing deleted executable from model: %s", exe->path);
   preload_state_unregister_exe(exe);
   preload_exe_free(exe);

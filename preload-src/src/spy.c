@@ -25,6 +25,7 @@
 #include "conf.h"
 #include "state.h"
 #include "proc.h"
+#include "vomm.h"
 
 
 static GSList *state_changed_exes;
@@ -49,6 +50,11 @@ running_process_callback (pid_t pid, const char *path)
     if (!exe_is_running (exe)) {
       new_running_exes = g_slist_prepend (new_running_exes, exe);
       state_changed_exes = g_slist_prepend (state_changed_exes, exe);
+
+      /* VOMM Update Hook: Record execution event (transition from idle to running) */
+      if (preload_is_vomm_algorithm()) {
+          vomm_update(exe);
+      }
     }
 
     /* update timestamp */
@@ -104,6 +110,11 @@ new_exe_callback (char *path, pid_t pid)
     exe = preload_exe_new (path, TRUE, exemaps);
     preload_state_register_exe (exe, TRUE);
     state->running_exes = g_slist_prepend (state->running_exes, exe);
+
+    /* VOMM Update Hook: Record execution event (newly discovered process) */
+    if (preload_is_vomm_algorithm()) {
+        vomm_update(exe);
+    }
 
   } else {
     g_hash_table_insert (state->bad_exes, g_strdup (path), GINT_TO_POINTER (size));

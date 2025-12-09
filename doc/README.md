@@ -113,6 +113,10 @@ All settings from `preload.conf` are available as NixOS options:
       # Default: "/nix/store/;/run/current-system/;!/" (NixOS specific)
       exePrefix = "/nix/store/;/run/current-system/;!/";
 
+      # Prediction algorithm
+      # Options: "Markov", "VOMM"
+      predictionAlgorithm = "VOMM";
+
       # I/O settings
       processes = 30;          # Maximum number of parallel readahead processes. Default: 30
       sortStrategy = 3;        # I/O sorting strategy: 0=none, 1=path, 2=inode, 3=block. Default: 3
@@ -137,7 +141,13 @@ Preload periodically scans `/proc` to gather information about:
 
 ### Prediction Model
 
-The daemon builds a **Markov chain model** that tracks:
+The daemon builds a prediction model to anticipate user actions.
+Supported algorithms:
+
+- **VOMM**: [Variable Order Markov Model](VOMM.md) (Default)
+- **Markov**: Legacy Markov chain model
+
+The model tracks:
 
 - Which applications are commonly run together
 - Temporal correlations between application launches
@@ -274,6 +284,14 @@ mapprefix = /usr/;/lib;/var/cache/;!/
 # Which executables to consider.
 # Default: !/usr/sbin/;!/usr/local/sbin/;/usr/;!/
 exeprefix = !/usr/sbin/;!/usr/local/sbin/;/usr/;!/
+
+# prediction_algorithm (string)
+# The prediction algorithm to use.
+# Options: "Markov", "VOMM" (Default)
+# "Markov" = Classic Markov chain prediction
+# "VOMM"   = Variable Order Markov Model (experimental but recommended)
+# Default: "VOMM"
+prediction_algorithm = "VOMM"
 
 ###############################################################################
 #                           I/O OPTIMIZATION

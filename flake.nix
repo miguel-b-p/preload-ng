@@ -143,6 +143,9 @@
             # Path prefixes for executables
             exeprefix = ${cfg.settings.exePrefix}
 
+            # Prediction algorithm
+            prediction_algorithm = ${cfg.settings.predictionAlgorithm}
+
             # Number of parallel readahead processes
             processes = ${toString cfg.settings.processes}
 
@@ -264,6 +267,19 @@
                 '';
               };
 
+              predictionAlgorithm = lib.mkOption {
+                type = lib.types.enum [
+                  "Markov"
+                  "VOMM"
+                ];
+                default = "VOMM";
+                description = ''
+                  The prediction algorithm to use.
+                  "Markov" = Classic Markov chain prediction.
+                  "VOMM" = Variable Order Markov Model (experimental).
+                '';
+              };
+
               processes = lib.mkOption {
                 type = lib.types.int;
                 default = 30;
@@ -286,14 +302,16 @@
                   3 = SORT_BLOCK (most sophisticated, best for most filesystems)
                 '';
               };
+
             };
           };
 
           config = lib.mkIf cfg.enable {
             systemd.services.preload-ng = {
               description = "Preload-NG Daemon";
-              wantedBy = [ "multi-user.target" ];
+              wantedBy = [ "basic.target" ];
               after = [ "local-fs.target" ];
+              before = [ "systemd-user-sessions.service" ];
 
               serviceConfig = {
                 Type = "simple";
