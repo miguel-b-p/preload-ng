@@ -170,7 +170,7 @@ static void
 exe_prob_print (gpointer G_GNUC_UNUSED key, preload_exe_t *exe, gpointer G_GNUC_UNUSED data)
 {
   if (!exe_is_running (exe))
-    fprintf (stderr, "ln(prob(~EXE)) = \t%13.10lf\t%s\n", exe->lnprob, exe->path);
+    g_debug ("[Prophet] Final Bid: %s (lnprob: %.4f)", exe->path, exe->lnprob);
 }
 
 
@@ -178,7 +178,7 @@ static void map_prob_print (preload_map_t *map) G_GNUC_UNUSED;
 static void
 map_prob_print (preload_map_t *map)
 {
-  fprintf (stderr, "ln(prob(~MAP)) = \t%13.10lf\t%s\n", map->lnprob, map->path);
+  g_debug ("[Prophet] Final Bid: %s (lnprob: %.4f)", map->path, map->lnprob);
 }
 
 
@@ -267,9 +267,9 @@ preload_prophet_readahead (GPtrArray *maps_arr)
 void
 preload_prophet_predict (gpointer data)
 {
+  g_debug("Running Prediction (algorithm: %s)...", 
+        conf->system.prediction_algorithm ? conf->system.prediction_algorithm : "NULL");
   if (preload_is_vomm_algorithm()) {
-      g_debug("Running VOMM Prediction (algorithm: %s)...", 
-              conf->system.prediction_algorithm ? conf->system.prediction_algorithm : "NULL");
       
       /* Reset probabilities to avoid stale values */
       g_hash_table_foreach (state->exes, (GHFunc)exe_zero_prob, data);

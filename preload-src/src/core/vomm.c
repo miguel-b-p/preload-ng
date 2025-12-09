@@ -55,7 +55,7 @@ static void vomm_node_free(gpointer data) {
 }
 
 gboolean vomm_init(void) {
-    g_debug("Initializing VOMM Algorithm...");
+    g_debug("[VOMM] Initializing Algorithm...");
     /* Root represents the empty context */
     vomm_system.root = vomm_node_new(NULL, NULL);
     vomm_system.current_context = vomm_system.root;
@@ -91,7 +91,7 @@ void vomm_update(preload_exe_t *exe) {
     /* VOMM might not be initialized yet during state load */
     if (!vomm_system.root) return;
     
-    g_debug("VOMM Update: %s", exe->path);
+    g_debug("[VOMM] Update: %s", exe->path);
 
     /* 1. Update Global History */
     vomm_system.history = g_list_append(vomm_system.history, exe);
@@ -145,7 +145,7 @@ void vomm_update(preload_exe_t *exe) {
                 g_hash_table_insert(root_ctx->children, g_strdup(exe->path), bigram_target);
             }
             bigram_target->count++;
-            g_debug("VOMM: Bigram updated %s -> %s", prev_exe->path, exe->path);
+            g_debug("[VOMM] Bigram updated: %s -> %s", prev_exe->path, exe->path);
         }
     }
 }
@@ -188,7 +188,7 @@ static void predict_ppm(vomm_node_t *node) {
         child_conf = fmax(epsilon, fmin(1.0 - epsilon, child_conf));
         
         child->exe->lnprob += log(child_conf);
-        g_debug("VOMM PPM: Bidding on %s with conf %.4f", child->exe->path, child_conf);
+        g_debug("[VOMM] PPM Prediction: Bidding on %s (conf: %.4f)", child->exe->path, child_conf);
     }
 }
 
@@ -213,7 +213,7 @@ static void predict_dg_fallback(vomm_node_t *node) {
              /* Weak bid for all neighbors */
              /* Add a small probability boost */
              child->exe->lnprob += log(1.1);
-             g_debug("VOMM: Fallback bidding on %s with lnprob += %f", child->exe->path, log(1.1));
+             g_debug("[VOMM] Fallback Prediction: Bidding on %s (lnprob += %f)", child->exe->path, log(1.1));
         }
     }
 }
@@ -269,7 +269,7 @@ static void predict_global_frequency(void) {
 
 void vomm_predict(void) {
     if (!vomm_system.root) {
-        g_debug("VOMM: No root context for prediction");
+        g_debug("[VOMM] No root context for prediction");
         return;
     }
     
@@ -295,7 +295,7 @@ void vomm_predict(void) {
         
         vomm_node_t *global_ctx = g_hash_table_lookup(vomm_system.root->children, hist_exe->path);
         if (global_ctx && g_hash_table_size(global_ctx->children) > 0) {
-            g_debug("VOMM: Predicting from history item: %s (has %d children)", 
+            g_debug("[VOMM] Predicting from history item: %s (has %d children)", 
                     hist_exe->path, g_hash_table_size(global_ctx->children));
             predict_ppm(global_ctx);
             predictions_made++;
@@ -306,7 +306,7 @@ void vomm_predict(void) {
     if (vomm_system.current_context && 
         vomm_system.current_context != vomm_system.root &&
         g_hash_table_size(vomm_system.current_context->children) > 0) {
-        g_debug("VOMM: Predicting from deep context (Order K)");
+        g_debug("[VOMM] Predicting from deep context (Order K)");
         predict_ppm(vomm_system.current_context);
         predict_dg_fallback(vomm_system.current_context);
         predictions_made++;
@@ -319,13 +319,13 @@ void vomm_predict(void) {
      * This ensures we preload commonly-used programs even if they're not
      * direct children of the current context.
      */
-    g_debug("VOMM: Applying global frequency predictions");
+    g_debug("[VOMM] Applying global frequency predictions");
     predict_global_frequency();
     
     if (predictions_made == 0) {
-        g_debug("VOMM: No context predictions - relying on global frequency only");
+        g_debug("[VOMM] No context predictions - relying on global frequency only");
     } else {
-        g_debug("VOMM: Made predictions from %d contexts + global frequency", predictions_made);
+        g_debug("[VOMM] Made predictions from %d contexts + global frequency", predictions_made);
     }
 }
 
@@ -337,7 +337,7 @@ void vomm_predict(void) {
 void vomm_hydrate_from_state(void) {
     if (!vomm_system.root) return;
     
-    g_debug("VOMM: Hydrating from legacy Markov state...");
+    g_debug("[VOMM] Hydrating from legacy Markov state...");
     int hydrated_count = 0;
     
     GHashTableIter iter;
@@ -418,5 +418,5 @@ void vomm_hydrate_from_state(void) {
         }
     }
     
-    g_debug("VOMM: Hydration complete. Imported %d transitions.", hydrated_count);
+    g_debug("[VOMM] Hydration complete. Imported %d transitions.", hydrated_count);
 }
