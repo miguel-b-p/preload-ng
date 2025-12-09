@@ -47,3 +47,5 @@ Thumbs.db
 # env
 .flox
 .coderabbit.yaml
+scripts/preload.conf
+scripts/run.sh
