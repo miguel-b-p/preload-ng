@@ -6,6 +6,8 @@
 *.la
 *.lo
 *.tar.gz
+preload.log
+preload.state
 
 # Autotools generated
 

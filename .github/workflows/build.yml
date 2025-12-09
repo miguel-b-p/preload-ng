@@ -20,22 +20,20 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential autoconf automake libtool pkg-config libglib2.0-dev
+          sudo apt-get install -y build-essential pkg-config libglib2.0-dev
 
-      - name: Configure and Compile
+      - name: Compile
         run: |
           cd preload-src
-          ./bootstrap
-          ./configure
           make
 
       - name: Move Binary and clean compiled files
         run: |
           mkdir -p bin
-          cp preload-src/src/preload bin/preload
-          cp preload-src/src/preload.conf bin/preload.conf
+          cp preload-src/preload bin/preload
+          cp preload-src/preload.conf bin/preload.conf
           cd preload-src
-          make distclean
+          make clean
 
       - name: Commit and Push
         run: |

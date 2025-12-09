@@ -19,10 +19,17 @@ VAR_LIB="/usr/local/var/lib/preload"
 SYSTEMD_DIR="/etc/systemd/system"
 OPENRC_DIR="/etc/init.d"
 
-# Find the bin directory
+# Find the bin directory or source directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
-BIN_DIR="$PROJECT_DIR/bin"
+# Check bin/ first (if package), then preload-src/ (if built from source)
+if [ -f "$PROJECT_DIR/bin/preload" ]; then
+    BIN_DIR="$PROJECT_DIR/bin"
+elif [ -f "$PROJECT_DIR/preload-src/preload" ]; then
+    BIN_DIR="$PROJECT_DIR/preload-src"
+else
+    BIN_DIR="$PROJECT_DIR/bin" # Default fallback
+fi
 
 print_header() {
     echo -e "${BLUE}==========================================${NC}"
@@ -56,9 +63,9 @@ check_root() {
 
 check_binary() {
     if [ ! -f "$BIN_DIR/preload" ]; then
-        print_error "Precompiled binary not found at: $BIN_DIR/preload"
+        print_error "Binary not found at: $BIN_DIR/preload"
         echo ""
-        echo "Please either:"
+        echo "Please compile first:"
         echo "  1. Run 'bash build.sh' to compile from source"
         echo "  2. Download the precompiled binary from the releases page"
         exit 1

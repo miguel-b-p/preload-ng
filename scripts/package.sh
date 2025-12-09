@@ -83,6 +83,7 @@ create_package() {
     cd "$parent_dir"
 
     # Create tar.gz file excluding unnecessary files
+    # Create tar.gz file excluding unnecessary files
     tar --exclude='*.o' \
         --exclude='*.a' \
         --exclude='*.so' \
@@ -90,12 +91,6 @@ create_package() {
         --exclude='*.lo' \
         --exclude='.deps' \
         --exclude='.libs' \
-        --exclude='autom4te.cache' \
-        --exclude='config.h' \
-        --exclude='config.log' \
-        --exclude='config.status' \
-        --exclude='stamp-h1' \
-        --exclude='libtool' \
         --exclude='*~' \
         --exclude='*.bak' \
         --exclude='*.swp' \
@@ -103,6 +98,9 @@ create_package() {
         --exclude='.gitignore' \
         --exclude='*.tar.gz' \
         --exclude='result' \
+        --exclude='preload.log' \
+        --exclude='preload.state' \
+        --exclude='core' \
         -czvf "$file_name" "$project_name"
 
     # Move to project directory

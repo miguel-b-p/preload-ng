@@ -48,9 +48,6 @@ check_dependencies() {
 
     local missing=()
 
-    check_command automake || missing+=("automake")
-    check_command autoconf || missing+=("autoconf")
-    check_command libtool || missing+=("libtool")
     check_command make || missing+=("make")
     check_command gcc || missing+=("gcc")
 
@@ -92,19 +89,16 @@ clean_build() {
 }
 
 build() {
-    print_info "[1/3] Configuring build system..."
-    ./bootstrap
-    ./configure
-    print_success "Build system configured"
-
-    echo ""
-    print_info "[2/3] Compiling..."
+    print_info "[1/2] Compiling..."
     make -j"$(nproc)"
     print_success "Compilation complete"
 
     echo ""
-    print_info "[3/3] Build finished!"
+    print_info "[2/2] Build finished!"
 }
+
+# No-op function to maintain script structure if needed, or we just remove it.
+# The original script had 3 steps. We reduced to 1 (compilation).
 
 install_preload() {
     echo ""
@@ -114,7 +108,8 @@ install_preload() {
     [yY] | [yY][eE][sS])
         echo ""
         print_info "Installing preload (requires root permissions)..."
-        sudo make install
+        # Use install.sh script since Makefile doesn't have install target
+        sudo "$script_dir/scripts/install.sh" install
         print_success "Preload installed"
 
         echo ""
