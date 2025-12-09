@@ -27,6 +27,6 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(DEPS) $(TARGET)
+	rm -f $(OBJS) $(DEPS) $(TARGET) $(TARGET).conf $(TARGET).state $(TARGET).log
 
 -include $(DEPS)

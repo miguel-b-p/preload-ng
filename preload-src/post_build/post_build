@@ -4,7 +4,7 @@ set -e
 echo "=== Post-Build Script ==="
 
 # Determine the directory where the script holds
-SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$SCRIPT_DIR/.."
 
 # Move to project root
@@ -67,18 +67,46 @@ run_preload_test() {
     $BINARY $ARGS &
     PID=$!
 
-    echo "PID: $PID. Waiting 2 seconds..."
-    sleep 2
+    echo "PID: $PID. Monitoring process..."
 
-    if ps -p $PID >/dev/null; then
-        echo "Success: preload running."
-        kill $PID
-        wait $PID 2>/dev/null || true
-    else
-        echo "Error: preload failed to start."
+    # 1. Initial Check (Check immediately)
+    if ! kill -0 $PID 2>/dev/null; then
+        echo "Error: Process $PID died immediately after launch."
         wait $PID
         exit 1
     fi
+
+    # 2. Monitoring Loop (2 seconds)
+    # Poll every 0.1s for 20 iterations
+    for i in $(seq 1 20); do
+        sleep 0.1
+        if ! kill -0 $PID 2>/dev/null; then
+            echo "Error: Process $PID died prematurely during monitoring (iteration $i)."
+            wait $PID
+            exit 1
+        fi
+    done
+
+    echo "Success: preload running stable for 2 seconds."
+
+    # 3. Teardown with Timeout
+    kill $PID 2>/dev/null
+
+    # Wait for exit with timeout (another 2 seconds max)
+    local WAIT_CYCLES=20
+    local COUNT=0
+    while kill -0 $PID 2>/dev/null; do
+        sleep 0.1
+        COUNT=$((COUNT + 1))
+        if [ "$COUNT" -ge "$WAIT_CYCLES" ]; then
+            echo "Error: Process $PID hung during shutdown. Forcing kill."
+            kill -9 $PID 2>/dev/null
+            wait $PID 2>/dev/null || true
+            exit 1
+        fi
+    done
+
+    wait $PID 2>/dev/null || true
 }
 
 # Test 1: Debug mode (similar to 'preconf.conf.debug' in runtests.sh, but using our generated conf)
