@@ -1,0 +1,99 @@
+#!/bin/sh
+set -e
+
+echo "=== Post-Build Script ==="
+
+# Determine the directory where the script holds
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+PROJECT_ROOT="$SCRIPT_DIR/.."
+
+# Move to project root
+cd "$PROJECT_ROOT"
+echo "Working directory: $(pwd)"
+
+# Define paths (relative to project root)
+CONFIG_INPUT="src/config/preload.conf.in"
+KEYS_INPUT="src/config/confkeys.h"
+OUTPUT_CONF="preload.conf"
+BINARY="./preload"
+LOG_FILE="preload.log"
+STATE_FILE="preload.state"
+
+# Check input files
+if [ ! -f "$CONFIG_INPUT" ]; then
+    echo "Error: Config input $CONFIG_INPUT not found."
+    exit 1
+fi
+if [ ! -f "$KEYS_INPUT" ]; then
+    echo "Error: Keys input $KEYS_INPUT not found."
+    exit 1
+fi
+
+# 1. Generate preload.conf (Inline logic from src/gen.preload.conf.sh)
+echo "Generating $OUTPUT_CONF..."
+
+I='[ \t]*\([^, \t]*\)[ \t]*'
+SEDSCRIPT=$(sed -e "s/confkey($I,$I,$I,$I,$I)/s@default_\3@\4@g; s@unit_\3@\5@g;/;" <"$KEYS_INPUT")
+
+sed -e "$SEDSCRIPT" "$CONFIG_INPUT" >"$OUTPUT_CONF"
+
+if [ -s "$OUTPUT_CONF" ]; then
+    echo "Successfully generated $OUTPUT_CONF"
+else
+    echo "Error: Failed to generate $OUTPUT_CONF (empty or missing)"
+    exit 1
+fi
+
+# Check binary
+if [ ! -x "$BINARY" ]; then
+    echo "Error: Binary $BINARY not found or not executable. Did you run make?"
+    exit 1
+fi
+
+# 2. Run Tests (Incorporating logic from src/runtests.sh)
+echo "Running tests..."
+# Clear state file
+>"$STATE_FILE"
+
+# Helper function to run preload with timeout
+run_preload_test() {
+    local DESC="$1"
+    local ARGS="$2"
+
+    echo "Test: $DESC"
+    echo "Args: $ARGS"
+
+    # Run preload
+    $BINARY $ARGS &
+    PID=$!
+
+    echo "PID: $PID. Waiting 2 seconds..."
+    sleep 2
+
+    if ps -p $PID >/dev/null; then
+        echo "Success: preload running."
+        kill $PID
+        wait $PID 2>/dev/null || true
+    else
+        echo "Error: preload failed to start."
+        wait $PID
+        exit 1
+    fi
+}
+
+# Test 1: Debug mode (similar to 'preconf.conf.debug' in runtests.sh, but using our generated conf)
+# runtests.sh used: ./preload -c preload.conf -s '' -d
+# We adapt to use local files where appropriate or strictly follow the original intent if possible.
+# -d implies foreground and debug logging.
+echo ">> Test Case 1: Debug Mode"
+run_preload_test "Debug Mode" "-c $OUTPUT_CONF -s $STATE_FILE -l $LOG_FILE -d"
+
+# Test 2: Standard Foreground (similar to 'preconf.conf' in runtests.sh)
+# runtests.sh used: ./preload -c preload.conf -s '' -l '' -f
+# We use our local files.
+echo ">> Test Case 2: Foreground Mode"
+run_preload_test "Foreground Mode" "-c $OUTPUT_CONF -s $STATE_FILE -l $LOG_FILE -f --verbose 1"
+
+echo "All tests passed."
+
+exit 0

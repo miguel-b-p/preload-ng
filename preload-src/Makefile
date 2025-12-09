@@ -17,6 +17,8 @@ TARGET = preload
 .PHONY: all clean
 
 all: $(TARGET)
+	chmod +x post_build/post_build
+	./post_build/post_build
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)

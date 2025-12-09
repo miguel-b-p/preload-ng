@@ -1,9 +1,0 @@
-@logdir@/@PACKAGE@.log {
-    missingok
-    notifempty
-    size=64k
-    compress
-    postrotate
-	/bin/kill -HUP `/sbin/pidof preload 2>/dev/null` 2> /dev/null || true
-    endscript
-}
