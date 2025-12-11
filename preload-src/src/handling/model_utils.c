@@ -9,6 +9,7 @@
 #include "model_utils.h"
 #include "log.h"
 #include "state.h"
+#include "exe.h"
 
 #include <sys/stat.h>
 

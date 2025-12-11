@@ -27,6 +27,8 @@
 #include "state.h"
 #include "readahead.h"
 #include "vomm.h"
+#include "exe.h"
+#include "markov.h"
 
 #include <math.h>
 

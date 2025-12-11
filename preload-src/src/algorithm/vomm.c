@@ -11,6 +11,7 @@
 #include "conf.h"
 #include "prophet.h"
 #include "state.h"
+#include "exe.h"
 
 #include <math.h>
 
