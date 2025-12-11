@@ -151,7 +151,7 @@ RestartSec=5
 # Security hardening
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/usr/local/var/lib/preload /var/log /usr/local/var/log
+ReadWritePaths=/var/lib/preload /var/log /usr/local/var/log
 PrivateTmp=true
 NoNewPrivileges=true
 

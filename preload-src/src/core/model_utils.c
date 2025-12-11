@@ -143,7 +143,6 @@ remove_invalid_exe(preload_exe_t *exe, cleanup_context_t *ctx)
 
   g_message("Removing deleted executable from model: %s", exe->path);
   preload_state_unregister_exe(exe);
-  preload_exe_free(exe);
   ctx->removed_count++;
 }
 
