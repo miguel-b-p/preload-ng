@@ -27,6 +27,8 @@
 #include "state.h"
 #include "readahead.h"
 #include "vomm.h"
+#include "exe.h"
+#include "markov.h"
 
 #include <math.h>
 
@@ -149,10 +151,11 @@ exe_zero_prob (gpointer G_GNUC_UNUSED key, preload_exe_t *exe, gpointer G_GNUC_U
  *
  */
 static void
-exemap_bid_in_maps (gpointer key, gpointer value, gpointer G_GNUC_UNUSED user_data)
+exemap_bid_in_maps (gpointer key, gpointer user_data)
 {
   preload_exemap_t *exemap = (preload_exemap_t *)key;
-  preload_exe_t *exe = (preload_exe_t *)value;
+  struct { gpointer data; preload_exe_t *exe; } *ctx = user_data;
+  preload_exe_t *exe = ctx->exe;
 
   if (exe_is_running (exe)) {
     /* if exe is running, we vote against the map,
@@ -162,6 +165,13 @@ exemap_bid_in_maps (gpointer key, gpointer value, gpointer G_GNUC_UNUSED user_da
   } else {
     exemap->map->lnprob += exe->lnprob;
   }
+}
+
+static void
+bid_in_exe_exemaps(gpointer G_GNUC_UNUSED key, preload_exe_t *exe, gpointer data)
+{
+    struct { gpointer data; preload_exe_t *exe; } ctx = { data, exe };
+    preload_exe_foreach_exemap(exe, (GFunc)exemap_bid_in_maps, &ctx);
 }
 
 
@@ -283,7 +293,7 @@ preload_prophet_predict (gpointer data)
       vomm_predict();    
       
       /* After VOMM predicts (which modifies lnprobs), we propagate to maps */
-      preload_exemap_foreach ((GHFunc)exemap_bid_in_maps, data);
+      g_hash_table_foreach (state->exes, (GHFunc)bid_in_exe_exemaps, data);
 
       /* verify: print top exe probabilities for debugging */
       if (preload_log_level >= 9)
@@ -305,7 +315,7 @@ preload_prophet_predict (gpointer data)
     g_hash_table_foreach (state->exes, (GHFunc)exe_prob_print, data);
 
   /* exes bid in maps */
-  preload_exemap_foreach ((GHFunc)exemap_bid_in_maps, data);
+  g_hash_table_foreach (state->exes, (GHFunc)bid_in_exe_exemaps, data);
 
   /* sort maps on probability */
   g_ptr_array_sort (state->maps_arr, (GCompareFunc)map_prob_compare);
