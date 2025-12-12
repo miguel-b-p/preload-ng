@@ -52,6 +52,7 @@ preload_conf_load (const char *conffile, gboolean fail)
   GKeyFile *f;
   GError *e = NULL;
   preload_conf_t newconf;
+  memset(&newconf, 0, sizeof(newconf));
   GLogLevelFlags flags = fail ? G_LOG_LEVEL_ERROR : G_LOG_LEVEL_CRITICAL;
 
 
@@ -59,6 +60,7 @@ preload_conf_load (const char *conffile, gboolean fail)
   if (conffile && *conffile)
     {
       preload_conf_t dummyconf;
+      memset(&dummyconf, 0, sizeof(dummyconf));
       g_message ("loading conf from %s", conffile);
       f = g_key_file_new ();
       if (!g_key_file_load_from_file (f, conffile, G_KEY_FILE_NONE, &e)) {

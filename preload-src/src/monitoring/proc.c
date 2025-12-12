@@ -243,7 +243,7 @@ void
 proc_get_memstat (preload_memory_t *mem)
 {
   static int pagesize = 0;
-  char buf[4096];
+  char buf[4096] = {0};
 
   memset (mem, 0, sizeof (*mem));
 
