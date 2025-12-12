@@ -31,7 +31,7 @@ TEST_TARGET = test_runner
 
 .PHONY: all clean test
 
-all: $(TARGET)
+all: test $(TARGET)
 	chmod +x post_build/post_build
 	./post_build/post_build
 
