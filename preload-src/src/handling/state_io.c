@@ -287,6 +287,7 @@ read_state (GIOChannel *f)
   char *errmsg;
 
   read_context_t rc;
+  memset (&rc, 0, sizeof (rc));
 
   rc.errmsg = NULL;
   rc.err = NULL;

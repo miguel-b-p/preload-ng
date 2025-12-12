@@ -88,10 +88,10 @@ accept_file (char *file, char * const *prefix)
 size_t
 proc_get_maps (pid_t pid, GHashTable *maps, GPtrArray **exemaps)
 {
-  char name[32];
+  char name[32] = {0};
   FILE *in;
   size_t size = 0;
-  char buffer[1024];
+  char buffer[1024] = {0};
 
   if (exemaps)
     *exemaps = g_ptr_array_new ();
@@ -107,8 +107,8 @@ proc_get_maps (pid_t pid, GHashTable *maps, GPtrArray **exemaps)
   
   while (fgets (buffer, sizeof (buffer) - 1, in))
     {
-      char file[FILELEN];
-      long start, end, offset, length;
+      char file[FILELEN] = {0};
+      long start = 0, end = 0, offset = 0, length = 0;
       int count;
 
       count = sscanf (buffer, "%lx-%lx %*15s %lx %*x:%*x %*u %"FILELENSTR"s",
@@ -185,8 +185,8 @@ proc_foreach (GHFunc func, gpointer user_data)
       if (entry->d_name && all_digits (entry->d_name))
       {
 	  pid_t pid;
-	  char name[32];
-	  char exe_buffer[FILELEN];
+	  char name[32] = {0};
+	  char exe_buffer[FILELEN] = {0};
 	  int len;
 
 	  pid = atoi (entry->d_name);
@@ -243,7 +243,7 @@ void
 proc_get_memstat (preload_memory_t *mem)
 {
   static int pagesize = 0;
-  char buf[4096];
+  char buf[4096] = {0};
 
   memset (mem, 0, sizeof (*mem));
 

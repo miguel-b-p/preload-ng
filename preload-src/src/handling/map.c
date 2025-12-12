@@ -58,7 +58,7 @@ preload_map_new (const char *path, size_t offset, size_t length)
 
   g_return_val_if_fail (path, NULL);
 
-  map = g_malloc (sizeof (*map));
+  map = g_malloc0 (sizeof (*map));
   map->path = g_strdup (path);
   map->offset = offset;
   map->length = length;
