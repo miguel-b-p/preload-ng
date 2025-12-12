@@ -101,6 +101,7 @@ preload_exe_new (const char *path, gboolean running, GPtrArray *exemaps)
     exe->exemaps = g_ptr_array_new ();
   else
     exe->exemaps = exemaps;
+  exe->lnprob = 0.0;
   g_ptr_array_foreach (exe->exemaps, (GFunc)exe_add_map_size, exe);
   exe->markovs = g_ptr_array_new ();
   return exe;
