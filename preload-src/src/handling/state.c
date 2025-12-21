@@ -41,6 +41,13 @@ static char *autosave_statefile;
 
 /* Callback to set running processes after state load */
 static void
+update_markov_state_callback (gpointer data, gpointer G_GNUC_UNUSED user_data)
+{
+  preload_markov_t *markov = (preload_markov_t *)data;
+  markov->state = markov_compute_state (markov);
+}
+
+static void
 set_running_process_callback (gpointer key, gpointer value, gpointer user_data)
 {
   pid_t pid = (pid_t)GPOINTER_TO_INT(key);
@@ -85,6 +92,12 @@ preload_state_load (const char *statefile)
   /* Initialize running processes */
   proc_foreach ((GHFunc)set_running_process_callback, GINT_TO_POINTER (state->time));
   state->last_running_timestamp = state->time;
+
+  // /* Recompute markov states based on running processes */
+  // preload_markov_foreach ((GFunc)update_markov_state_callback, NULL);
+
+  /* Recompute markov states based on running processes */
+  preload_markov_foreach ((GFunc)update_markov_state_callback, NULL);
 
   proc_get_memstat (&(state->memstat));
   state->memstat_timestamp = state->time;
