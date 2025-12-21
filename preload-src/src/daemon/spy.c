@@ -189,13 +189,13 @@ preload_spy_update_model (gpointer data)
 {
   int period;
 
-  /* register newly discovered exes */
-  g_hash_table_foreach (new_exes, (GHFunc)new_exe_callback, data);
-  g_hash_table_destroy (new_exes);
-
   /* and adjust states for those changing */
   g_slist_foreach (state_changed_exes, (GFunc)exe_changed_callback, data);
   g_slist_free (state_changed_exes);
+
+  /* register newly discovered exes */
+  g_hash_table_foreach (new_exes, (GHFunc)new_exe_callback, data);
+  g_hash_table_destroy (new_exes);
 
   /* do some accounting */
   period = state->time - state->last_accounting_timestamp;
