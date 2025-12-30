@@ -71,6 +71,20 @@ Add to your `flake.nix`:
 
 > All settings from `preload.conf` are available as declarative options via `services.preload-ng.settings`. A `debug` option is also available to enable verbose output. See [doc/README.md](doc/README.md#nixos-declarative-configuration) for the complete configuration reference.
 
+#### NixOS service check
+
+To ensure the service is running you can run:
+
+```bash
+systemctl status preload-ng
+```
+
+Another way of ensuring the service is running is to check that the state file exists and contains a state with:
+
+```bash
+sudo cat /var/lib/preload/preload.state
+```
+
 ---
 
 ## Origin & Credits
