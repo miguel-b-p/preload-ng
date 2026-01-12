@@ -143,15 +143,19 @@ After=local-fs.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/sbin/preload --foreground --logfile ''
-ExecReload=/bin/kill -HUP $MAINPID
+
+StateDirectory=preload
+LogsDirectory=preload
+
+ExecStart=/usr/local/sbin/preload --foreground --logfile /var/log/preload/preload.log --verbose 9
+
 Restart=on-failure
 RestartSec=5
 
 # Security hardening
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=/var/lib/preload /var/log /usr/local/var/log
+ReadWritePaths=/var/log/preload /var/lib/preload
 PrivateTmp=true
 NoNewPrivileges=true
 
