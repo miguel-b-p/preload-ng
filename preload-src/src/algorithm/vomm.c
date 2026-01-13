@@ -14,6 +14,8 @@
 #include "exe.h"
 
 #include <math.h>
+#include "state_io.h" /* For string writing macros if needed, or we just write raw strings */
+
 
 /* VOMM Node representing a context in the prediction tree */
 struct _vomm_node_t {
@@ -420,4 +422,114 @@ void vomm_hydrate_from_state(void) {
     }
     
     g_debug("[VOMM] Hydration complete. Imported %d transitions.", hydrated_count);
+}
+
+/* --- Persistence Implementation --- */
+
+/* Node ID counter for export */
+static gint64 export_node_id_counter = 0;
+
+/* Helper to recursively write nodes */
+static void vomm_node_export_recursive(vomm_node_t *node, gint64 parent_id, GIOChannel *f) {
+    if (!node) return;
+
+    /* Assign ID to this node */
+    gint64 current_id = ++export_node_id_counter;
+
+    /* Write this node if it's not the root (root is implicitly id 0 or handled separately, 
+       but for simplicity we can export it if it has content, though usually root has no exe).
+       Actually, the protocol is: VOMMNODE <id> <exe_seq> <count> <parent_id>
+       Root has no exe. We skip writing root explicitly as a VOMMNODE line because 
+       on import we already have a root. We just recurse its children pointing to parent_id=0.
+       Wait, if we skip writing root, how do children refer to it? 
+       Let's say Root ID is 0.
+    */
+    
+    if (node != vomm_system.root) {
+        if (node->exe) {
+            GError *err = NULL;
+            gchar *line = g_strdup_printf("%s\t%" G_GINT64_FORMAT "\t%" G_GINT64_FORMAT "\t%d\t%" G_GINT64_FORMAT "\n",
+                                          "VOMMNODE", /* We'll use the string literal here or define it. 
+                                                         But strictly speaking state_io should handle the tag. 
+                                                         However, the plan said "Delegate traversal". 
+                                                         To match state_io style, we should probably output the whole line including tag. */
+                                          current_id,
+                                          node->exe->seq,
+                                          node->count,
+                                          parent_id);
+            g_io_channel_write_chars(f, line, -1, NULL, &err);
+            if (err) {
+                g_warning("Error writing VOMM node: %s", err->message);
+                g_error_free(err);
+            }
+            g_free(line);
+        }
+    } else {
+        /* Root is ID 0 */
+        current_id = 0;
+    }
+
+    /* Recurse children */
+    if (node->children) {
+        GHashTableIter iter;
+        gpointer key, value;
+        g_hash_table_iter_init(&iter, node->children);
+        while (g_hash_table_iter_next(&iter, &key, &value)) {
+            vomm_node_t *child = (vomm_node_t*)value;
+            vomm_node_export_recursive(child, current_id, f);
+        }
+    }
+}
+
+void vomm_export_state(GIOChannel *f) {
+    g_debug("[VOMM] Exporting state...");
+    export_node_id_counter = 0;
+    /* Reset root ID to 0 logically */
+    vomm_node_export_recursive(vomm_system.root, -1, f); /* -1 parent for root? Logic above handles root specific */
+}
+
+
+/* Import state logic */
+static GHashTable *import_node_map = NULL;
+
+void vomm_import_node(gint64 id, preload_exe_t *exe, int count, gint64 parent_id) {
+    if (!vomm_system.root) vomm_init(); // Ensure initialized
+
+    if (import_node_map == NULL) {
+        import_node_map = g_hash_table_new(g_direct_hash, g_direct_equal);
+        /* Add root as ID 0 */
+        g_hash_table_insert(import_node_map, GINT_TO_POINTER(0), vomm_system.root);
+    }
+
+    vomm_node_t *parent_node = g_hash_table_lookup(import_node_map, GINT_TO_POINTER((gint)parent_id));
+    if (!parent_node) {
+        g_warning("[VOMM] Orphan node id=%" G_GINT64_FORMAT ", parent=%" G_GINT64_FORMAT " not found. Skipping.", id, parent_id);
+        return;
+    }
+
+    if (!exe) {
+        g_warning("[VOMM] Node id=%" G_GINT64_FORMAT " has no exe. Skipping.", id);
+        return;
+    }
+
+    /* Create the node */
+    vomm_node_t *node = vomm_node_new(exe, parent_node);
+    node->count = count;
+
+    /* Add to parent's children hash table */
+    /* Key is exe->path (string) */
+    /* Note: if using full VOMM, might allow multiple children with same exe but differentiating by something else? 
+       No, VOMM/PST structure is unique by edge label (exe) from a parent. */
+    g_hash_table_insert(parent_node->children, g_strdup(exe->path), node);
+
+    /* Remember this node for future children */
+    g_hash_table_insert(import_node_map, GINT_TO_POINTER((gint)id), node);
+}
+
+void vomm_import_done(void) {
+    if (import_node_map) {
+        g_hash_table_destroy(import_node_map);
+        import_node_map = NULL;
+    }
+    g_debug("[VOMM] Import complete.");
 }

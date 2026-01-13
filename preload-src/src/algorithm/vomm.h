@@ -40,6 +40,11 @@ void vomm_update(preload_exe_t *exe);
  */
 void vomm_predict(void);
 
+/* Persistence */
+void vomm_export_state(GIOChannel *f);
+void vomm_import_node(gint64 id, preload_exe_t *exe, int count, gint64 parent_id);
+void vomm_import_done(void);
+
 /* 
  * Hydrate VOMM model from legacy Markov state.
  * Should be called after loading state from disk.
