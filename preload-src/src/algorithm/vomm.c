@@ -430,39 +430,16 @@ void vomm_hydrate_from_state(void) {
 static gint64 export_node_id_counter = 0;
 
 /* Helper to recursively write nodes */
-static void vomm_node_export_recursive(vomm_node_t *node, gint64 parent_id, GIOChannel *f) {
+static void vomm_node_export_recursive(vomm_node_t *node, gint64 parent_id, VommNodeWriter writer, gpointer user_data) {
     if (!node) return;
 
     /* Assign ID to this node */
     gint64 current_id = ++export_node_id_counter;
 
-    /* Write this node if it's not the root (root is implicitly id 0 or handled separately, 
-       but for simplicity we can export it if it has content, though usually root has no exe).
-       Actually, the protocol is: VOMMNODE <id> <exe_seq> <count> <parent_id>
-       Root has no exe. We skip writing root explicitly as a VOMMNODE line because 
-       on import we already have a root. We just recurse its children pointing to parent_id=0.
-       Wait, if we skip writing root, how do children refer to it? 
-       Let's say Root ID is 0.
-    */
-    
+    /* Write this node if it's not the root */
     if (node != vomm_system.root) {
         if (node->exe) {
-            GError *err = NULL;
-            gchar *line = g_strdup_printf("%s\t%" G_GINT64_FORMAT "\t%" G_GINT64_FORMAT "\t%d\t%" G_GINT64_FORMAT "\n",
-                                          "VOMMNODE", /* We'll use the string literal here or define it. 
-                                                         But strictly speaking state_io should handle the tag. 
-                                                         However, the plan said "Delegate traversal". 
-                                                         To match state_io style, we should probably output the whole line including tag. */
-                                          current_id,
-                                          node->exe->seq,
-                                          node->count,
-                                          parent_id);
-            g_io_channel_write_chars(f, line, -1, NULL, &err);
-            if (err) {
-                g_warning("Error writing VOMM node: %s", err->message);
-                g_error_free(err);
-            }
-            g_free(line);
+            writer(current_id, node->exe->seq, node->count, parent_id, user_data);
         }
     } else {
         /* Root is ID 0 */
@@ -476,16 +453,16 @@ static void vomm_node_export_recursive(vomm_node_t *node, gint64 parent_id, GIOC
         g_hash_table_iter_init(&iter, node->children);
         while (g_hash_table_iter_next(&iter, &key, &value)) {
             vomm_node_t *child = (vomm_node_t*)value;
-            vomm_node_export_recursive(child, current_id, f);
+            vomm_node_export_recursive(child, current_id, writer, user_data);
         }
     }
 }
 
-void vomm_export_state(GIOChannel *f) {
+void vomm_export_state(VommNodeWriter writer, gpointer user_data) {
     g_debug("[VOMM] Exporting state...");
     export_node_id_counter = 0;
     /* Reset root ID to 0 logically */
-    vomm_node_export_recursive(vomm_system.root, -1, f); /* -1 parent for root? Logic above handles root specific */
+    vomm_node_export_recursive(vomm_system.root, -1, writer, user_data);
 }
 
 

@@ -287,9 +287,8 @@ read_vomm_node (read_context_t *rc)
 
   preload_exe_t *exe = g_hash_table_lookup (rc->exes, (gpointer)exe_seq);
   if (!exe) {
-      /* It is possible that exe is not found if badexe or something, 
-         but technically VOMM should only contain valid exes. */
-       rc->errmsg = READ_INDEX_ERROR;
+       /* Just warn and skip, don't abort loading */
+       g_warning("VOMM node references unknown exe seq %" G_GINT64_FORMAT ", skipping.", exe_seq);
        return;
   }
   
@@ -597,6 +596,18 @@ write_markov (preload_markov_t *markov, write_context_t *wc)
   write_ln ();
 }
 
+static void
+write_vomm_node_callback (gint64 id, gint64 exe_seq, int count, gint64 parent_id, gpointer user_data)
+{
+  write_context_t *wc = (write_context_t *)user_data;
+  
+  write_tag (TAG_VOMM_NODE);
+  g_string_printf (wc->line,
+                   "%" G_GINT64_FORMAT "\t%" G_GINT64_FORMAT "\t%d\t%" G_GINT64_FORMAT,
+                   id, exe_seq, count, parent_id);
+  write_string (wc->line);
+  write_ln ();
+}
 
 static char *
 write_state (GIOChannel *f)
@@ -612,9 +623,8 @@ write_state (GIOChannel *f)
   if (!wc.err) g_hash_table_foreach   (state->bad_exes, (GHFunc)write_badexe, &wc);
   if (!wc.err) g_hash_table_foreach   (state->exes, (GHFunc)write_exe, &wc);
   if (!wc.err) g_hash_table_foreach   (state->exes, (GHFunc)write_exe_exemaps, &wc);
-  if (!wc.err) g_hash_table_foreach   (state->exes, (GHFunc)write_exe_exemaps, &wc);
   if (!wc.err) preload_markov_foreach ((GFunc)write_markov, &wc);
-  if (!wc.err) vomm_export_state (wc.f);
+  if (!wc.err) vomm_export_state (write_vomm_node_callback, &wc);
 
   g_string_free (wc.line, TRUE);
   if (wc.err) {

@@ -31,6 +31,7 @@
 #include "prophet.h"
 #include "vomm.h"
 #include "model_utils.h"
+#include "power.h"
 
 
 /* Global state singleton */
@@ -195,6 +196,15 @@ preload_state_tick2 (gpointer data)
 static gboolean
 preload_state_tick (gpointer data)
 {
+  /* Power Saving: Check if running on battery */
+  if (preload_on_battery()) {
+      g_debug("Running on battery. Skipping IO intensive operations and slowing down cycle.");
+      /* Increase cycle time to save power (double the normal cycle) */
+      state->time += conf->model.cycle; 
+      g_timeout_add_seconds (conf->model.cycle * 2, preload_state_tick2, data);
+      return FALSE;
+  }
+
   if (conf->system.doscan) {
     g_debug ("state scanning begin");
     preload_spy_scan (data);
