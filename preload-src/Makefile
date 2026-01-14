@@ -13,7 +13,7 @@ HANDLING_SRCS = src/handling/state.c src/handling/state_io.c src/handling/map.c 
 ALGORITHM_SRCS = src/algorithm/markov.c src/algorithm/vomm.c src/algorithm/prophet.c
 CONFIG_SRCS = src/config/conf.c src/config/cmdline.c
 DAEMON_SRCS = src/daemon/preload.c
-UTILS_SRCS = src/utils/time_utils.c src/utils/log.c
+UTILS_SRCS = src/utils/time_utils.c src/utils/log.c src/utils/power.c
 
 SRCS = $(MONITORING_SRCS) $(HANDLING_SRCS) $(ALGORITHM_SRCS) $(CONFIG_SRCS) $(DAEMON_SRCS) $(UTILS_SRCS)
 OBJS = $(SRCS:.c=.o)

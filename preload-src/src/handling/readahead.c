@@ -28,6 +28,12 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <linux/fs.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+
+#ifndef IOPRIO_CLASS_IDLE
+#define IOPRIO_CLASS_IDLE 3
+#endif
 
 static void
 set_block(preload_map_t *file, gboolean use_inode)
@@ -292,6 +298,9 @@ preload_readahead (preload_map_t **files, int file_count)
   const char *path = NULL;
   size_t offset = 0, length = 0;
   int processed = 0;
+
+  /* Set IO Priority to IDLE to avoid slowing down foreground apps */
+  syscall(SYS_ioprio_set, 1, 0, (IOPRIO_CLASS_IDLE << 13) | 7);
 
   sort_files (files, file_count);
   for (i=0; i<file_count; i++)

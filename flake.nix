@@ -19,7 +19,7 @@
 
         preload-ng-bin = pkgs.stdenv.mkDerivation rec {
           pname = "preload-ng";
-          version = "0.6.7";
+          version = "0.6.8";
 
           src = ./bin;
 
@@ -54,7 +54,7 @@
 
         preload-ng-src = pkgs.stdenv.mkDerivation rec {
           pname = "preload-ng";
-          version = "0.6.7";
+          version = "0.6.8";
 
           src = ./preload-src;
 

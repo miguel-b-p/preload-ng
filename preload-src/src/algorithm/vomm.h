@@ -40,6 +40,12 @@ void vomm_update(preload_exe_t *exe);
  */
 void vomm_predict(void);
 
+/* Persistence */
+typedef void (*VommNodeWriter)(gint64 id, gint64 exe_seq, int count, gint64 parent_id, gpointer user_data);
+void vomm_export_state(VommNodeWriter writer, gpointer user_data);
+void vomm_import_node(gint64 id, preload_exe_t *exe, int count, gint64 parent_id);
+void vomm_import_done(void);
+
 /* 
  * Hydrate VOMM model from legacy Markov state.
  * Should be called after loading state from disk.

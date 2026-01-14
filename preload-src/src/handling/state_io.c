@@ -27,7 +27,9 @@
 #include "state.h"
 #include "map.h"
 #include "exe.h"
+#include "exe.h"
 #include "markov.h"
+#include "vomm.h"
 #include "log.h"
 
 
@@ -38,7 +40,9 @@
 #define TAG_BADEXE      "BADEXE"
 #define TAG_EXE         "EXE"
 #define TAG_EXEMAP      "EXEMAP"
+#define TAG_EXEMAP      "EXEMAP"
 #define TAG_MARKOV      "MARKOV"
+#define TAG_VOMM_NODE   "VOMMNODE"
 
 
 #define READ_TAG_ERROR			"invalid tag"
@@ -268,6 +272,29 @@ read_markov (read_context_t *rc)
   }
 }
 
+static void
+read_vomm_node (read_context_t *rc)
+{
+  gint64 id, exe_seq, parent_id;
+  int count;
+
+  if (4 > sscanf (rc->line,
+		  "%" G_GINT64_FORMAT " %" G_GINT64_FORMAT " %d %" G_GINT64_FORMAT,
+		  &id, &exe_seq, &count, &parent_id)) {
+    rc->errmsg = READ_SYNTAX_ERROR;
+    return;
+  }
+
+  preload_exe_t *exe = g_hash_table_lookup (rc->exes, (gpointer)exe_seq);
+  if (!exe) {
+       /* Just warn and skip, don't abort loading */
+       g_warning("VOMM node references unknown exe seq %" G_GINT64_FORMAT ", skipping.", exe_seq);
+       return;
+  }
+  
+  vomm_import_node(id, exe, count, parent_id);
+}
+
 
 static void
 set_markov_state_callback (gpointer data, gpointer G_GNUC_UNUSED user_data)
@@ -351,7 +378,10 @@ read_state (GIOChannel *f)
     else if (!strcmp (tag, TAG_BADEXE))	read_badexe (&rc);
     else if (!strcmp (tag, TAG_EXE))	read_exe (&rc);
     else if (!strcmp (tag, TAG_EXEMAP))	read_exemap (&rc);
+    else if (!strcmp (tag, TAG_EXE))	read_exe (&rc);
+    else if (!strcmp (tag, TAG_EXEMAP))	read_exemap (&rc);
     else if (!strcmp (tag, TAG_MARKOV))	read_markov (&rc);
+    else if (!strcmp (tag, TAG_VOMM_NODE)) read_vomm_node (&rc);
     else if (linebuf->str[0] && linebuf->str[0] != '#') {
       rc.errmsg = READ_TAG_ERROR;
       break;
@@ -373,7 +403,10 @@ read_state (GIOChannel *f)
 
   if (!errmsg) {
     preload_markov_foreach ((GFunc)set_markov_state_callback, NULL);
+    vomm_import_done();
   }
+
+  return errmsg;
 
   return errmsg;
 }
@@ -563,6 +596,18 @@ write_markov (preload_markov_t *markov, write_context_t *wc)
   write_ln ();
 }
 
+static void
+write_vomm_node_callback (gint64 id, gint64 exe_seq, int count, gint64 parent_id, gpointer user_data)
+{
+  write_context_t *wc = (write_context_t *)user_data;
+  
+  write_tag (TAG_VOMM_NODE);
+  g_string_printf (wc->line,
+                   "%" G_GINT64_FORMAT "\t%" G_GINT64_FORMAT "\t%d\t%" G_GINT64_FORMAT,
+                   id, exe_seq, count, parent_id);
+  write_string (wc->line);
+  write_ln ();
+}
 
 static char *
 write_state (GIOChannel *f)
@@ -579,6 +624,7 @@ write_state (GIOChannel *f)
   if (!wc.err) g_hash_table_foreach   (state->exes, (GHFunc)write_exe, &wc);
   if (!wc.err) g_hash_table_foreach   (state->exes, (GHFunc)write_exe_exemaps, &wc);
   if (!wc.err) preload_markov_foreach ((GFunc)write_markov, &wc);
+  if (!wc.err) vomm_export_state (write_vomm_node_callback, &wc);
 
   g_string_free (wc.line, TRUE);
   if (wc.err) {
