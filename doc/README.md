@@ -391,7 +391,7 @@ Preload respects system memory limits:
 
 | Path                             | Description         |
 | -------------------------------- | ------------------- |
-| `/usr/sbin/preload`              | Daemon executable   |
+| `/usr/local/sbin/preload`        | Daemon executable   |
 | `/etc/preload.conf`              | Configuration file  |
 | `/var/lib/preload/preload.state` | Learning database   |
 | `/var/log/preload`               | Log file            |
